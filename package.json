@@ -11,6 +11,9 @@
   "files": [
     "dist"
   ],
+  "workspaces": [
+    "sample/*"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -32,7 +35,8 @@
     "test:staging": "vitest run --config vitest.staging.config.ts",
     "test:watch": "vitest",
     "check:package": "npm run build && publint && attw --pack . --profile esm-only && node scripts/check-export-conditions.mjs && node scripts/check-bundle-size.mjs",
-    "check": "npm run typecheck && npm run test && npm run test:workers && npm run test:edge && npm run check:package"
+    "check": "npm run typecheck && npm run test && npm run test:workers && npm run test:edge && npm run check:package",
+    "demo": "npm run build && npm start --workspace sample/express-demo"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",

@@ -1,0 +1,10 @@
+<%- include('partials/header', { title: 'Home' }) %>
+<h1>Presto Pay SDK demo</h1>
+<p>Staging merchant <code><%= merchantId %></code>, prestoMrn <code><%= prestoMrn %></code>.</p>
+<h2>Payment demos</h2>
+<ul>
+  <li><a href="/hosted">Hosted payment page</a> — enter only amount and description.</li>
+  <li><a href="/custom">Custom payment selection</a> — select the payment methods to offer.</li>
+</ul>
+<p>After payment, use the returned <code>paymentRefNum</code> with the query, reverse, and refund API routes.</p>
+<%- include('partials/footer') %>

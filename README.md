@@ -15,6 +15,20 @@ verification. Zero runtime dependencies, ESM only, built on the Web platform (`f
 npm install @prestouniverse/presto-pay-sdk
 ```
 
+## Runnable Express demo
+
+The repository includes a small Express application that exercises the real staging gateway through the SDK:
+
+```bash
+npm run demo
+```
+
+Then open `http://localhost:3000/`. The demo covers hosted payment redirect, payment queries, reversals, refunds,
+and raw-body webhook verification. It uses the committed staging test credentials bundled under
+`sample/express-demo/keys/`; do not use them for production. To receive webhooks, expose the port through a public HTTPS tunnel and set `PUBLIC_URL` before
+starting the demo. See [`sample/express-demo/README.md`](sample/express-demo/README.md) for the full setup and route
+reference.
+
 ## Quick start
 
 ```ts
