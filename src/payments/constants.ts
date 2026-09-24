@@ -1,8 +1,8 @@
 /**
- * The code lists from wire-contract.md §8, as frozen objects whose keys are the wire values verbatim —
- * `Authorised`, not `AUTHORISED` — so the gateway's vocabulary survives into the identifier for free. Every type
- * is a union of the known values widened with `string & {}`, so an unrecognized value the gateway sends still
- * type-checks instead of being rejected (the lists are open-ended, js-plan.md §3.8).
+ * The code lists, as frozen objects whose keys are the wire values verbatim — `Authorised`, not `AUTHORISED` —
+ * so the gateway's vocabulary survives into the identifier for free. Every type is a union of the known values
+ * widened with `string & {}`, so an unrecognized value the gateway sends still type-checks instead of being
+ * rejected (the lists are open-ended).
  */
 
 export const PaymentStatus = Object.freeze({
@@ -104,7 +104,7 @@ export const EventCode = Object.freeze({
 } as const);
 export type EventCode = (typeof EventCode)[keyof typeof EventCode] | (string & {});
 
-/** Descriptive names mapped to the four-digit codes — `1203` is not a name. wire-contract.md §6 / js-plan.md §3.6. */
+/** Descriptive names mapped to the four-digit codes — `1203` is not a name. */
 export const ErrorCode = Object.freeze({
   // Request and auth
   InvalidRequestPath: '1001',

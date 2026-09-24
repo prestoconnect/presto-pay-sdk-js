@@ -1,5 +1,5 @@
 /**
- * The error hierarchy from js-plan.md §4.
+ * The error hierarchy.
  *
  * Two rules shape this file. `mayHaveTakenEffect` is stamped where the error is thrown, because only there does
  * the SDK still know which operation ran — a 500 on `init` is indeterminate, a 500 on `query` means nothing

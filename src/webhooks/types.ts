@@ -1,7 +1,7 @@
 import type { PaymentDetail } from '../payments/types.js';
 import type { EventCode, PaymentStatus } from '../payments/constants.js';
 
-/** A verified webhook event, js-plan.md §3.7 / §3.8. Wire field names, as with the payment responses. */
+/** A verified webhook event. Wire field names, as with the payment responses. */
 export interface WebhookEvent {
   readonly eventCode: EventCode;
   /** Which of the configured merchant IDs this event was for — one endpoint can serve several (§3.7). */

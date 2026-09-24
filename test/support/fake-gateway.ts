@@ -1,5 +1,5 @@
 /**
- * js-plan.md §11: "vitest with an injected fetch that plays the gateway, signing responses with the test key."
+ * An injected fetch that plays the gateway, signing responses with the test key.
  *
  * Verifies every incoming request against the merchant's test public key (so a client bug that mis-signs a
  * request is caught here too, not just in the unit tests), then hands the parsed body to `handle` and signs

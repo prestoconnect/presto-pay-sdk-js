@@ -1,5 +1,5 @@
 /**
- * js-plan.md §11: "every file in spec/vectors/ runs on Node, in workerd ..., and in edge-runtime."
+ * Every file in `spec/vectors/` runs on Node, in workerd, and in edge-runtime.
  *
  * `spec/vectors/` is loaded from disk with `node:fs` in the Node suite, and workerd has no real filesystem —
  * so this is a *smoke* subset, not the full vector suite: the same handful of cases (the two real staging
@@ -63,7 +63,7 @@ uYmbyecCkuRnxClIy/Psqh2xYiY7bChjNnIdNm3j26BM/nw=
 -----END CERTIFICATE-----`;
 
 describe('platform smoke: canonicalization', () => {
-  it('matches the worked example from wire-contract.md §4', () => {
+  it('matches the worked example from the wire contract', () => {
     const canonical = canonicalize({
       mid: 'PW2401XH9KCX',
       prestoMrn: 'PM240110XDSFC',

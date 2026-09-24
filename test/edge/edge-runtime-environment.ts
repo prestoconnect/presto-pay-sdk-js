@@ -1,7 +1,7 @@
 /**
- * A minimal vitest `Environment` backed by `@edge-runtime/vm`'s `EdgeVM`, for the edge-runtime leg of
- * js-plan.md §11. There is no maintained `vitest-environment-edge-runtime` package on npm (vitest resolves the
- * built-in name "edge-runtime" to exactly that package name, which 404s) — so this fills the same role: overlay
+ * A minimal vitest `Environment` backed by `@edge-runtime/vm`'s `EdgeVM`, for the edge-runtime test leg. There
+ * is no maintained `vitest-environment-edge-runtime` package on npm (vitest resolves the built-in name
+ * "edge-runtime" to exactly that package name, which 404s) — so this fills the same role: overlay
  * the Vercel Edge Runtime's own primitives (its `fetch`, `crypto.subtle`, `TextEncoder`/`Decoder`, `atob`/`btoa`)
  * onto the Node global vitest hands us, so the code under test really exercises the edge platform's
  * implementations rather than Node's.

@@ -1,5 +1,5 @@
 /**
- * The canonical string, wire-contract.md §4.
+ * The canonical string.
  *
  * Take every key but `signature`, sort by code point, render each value, join with `:`. The rendering rules are
  * short but every one of them has a real signature behind it in spec/vectors/canonical.json.

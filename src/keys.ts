@@ -1,4 +1,4 @@
-/** Public key-import helpers (js-plan.md §4 "Other exports"), thin wrappers naming the field for error messages. */
+/** Public key-import helpers, thin wrappers naming the field for error messages. */
 import { importPrivateKey as importPrivateKeyInternal, importPublicKey } from './internal/crypto.js';
 
 export function importPrivateKey(pem: string): Promise<CryptoKey> {

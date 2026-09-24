@@ -4,5 +4,5 @@
  */
 export const SDK_VERSION = '0.0.0-dev.0';
 
-/** js-plan.md §3.1: `presto-pay-sdk-js/<version>`, SDK policy rather than a gateway requirement. */
+/** `presto-pay-sdk-js/<version>`, SDK policy rather than a gateway requirement. */
 export const USER_AGENT = `presto-pay-sdk-js/${SDK_VERSION}`;

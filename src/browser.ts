@@ -1,5 +1,5 @@
 /**
- * Resolved by the `browser` export condition (js-plan.md §1, §10). Refusing browsers is deliberate: the private
+ * Resolved by the `browser` export condition. Refusing browsers is deliberate: the private
  * key must never reach one. This condition is ordered *after* the runtime-specific ones in package.json, because
  * `browser` is not browser-only in practice — Vite- and webpack-based Worker builds often resolve it too, and a
  * legitimate Workers user must never land here.

@@ -1,10 +1,10 @@
 /**
- * js-plan.md §11: "npm run test:staging, skipped unless PRESTOPAY_STAGING_SMOKE=1. It runs on Node and on
- * `wrangler dev` with strict: true (§4), so anything the [U] rules guessed wrong about fails loudly instead of
- * being absorbed, and saves unfamiliar bodies as candidate vectors."
+ * `npm run test:staging`, skipped unless PRESTOPAY_STAGING_SMOKE=1. It runs against real staging with
+ * `strict: true`, so anything an unconfirmed rule guessed wrong about fails loudly instead of being absorbed,
+ * and saves unfamiliar bodies as candidate vectors.
  *
- * This hits Presto's real staging gateway (spec/keys/README.md), which is a live third-party network call — it
- * must never run as part of `npm test` or CI-by-default. It only runs when a human explicitly opts in.
+ * This hits Presto's real staging gateway, which is a live third-party network call — it must never run as
+ * part of `npm test` or CI-by-default. It only runs when a human explicitly opts in.
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

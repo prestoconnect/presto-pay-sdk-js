@@ -1,6 +1,6 @@
 /**
- * js-plan.md §6: "a Node suite drives real sockets for each case ... on every Node version in CI. A Node or
- * undici upgrade that changes codes fails these tests instead of silently changing retry behavior."
+ * A Node suite drives real sockets for each case, on every Node version in CI: a Node or undici upgrade that
+ * changes codes fails these tests instead of silently changing retry behavior.
  *
  * This exercises the real `fetch`/undici stack against real listeners, not an injected fake, so what is proven
  * here is that Node's actual error codes land where `isRequestNotSentError` (src/internal/http.ts) expects them.

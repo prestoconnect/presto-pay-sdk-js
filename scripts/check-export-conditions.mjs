@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// js-plan.md §11: "an import test per export condition (including the browser guard and a bundler config that
-// sets browser: true while targeting Workers, which must still resolve the real module, §10)."
+// An import test per export condition, including the browser guard and a bundler config that sets
+// browser: true while targeting Workers, which must still resolve the real module.
 //
 // Two different resolvers are exercised on purpose:
 //   - Real `node --conditions=...`: Node always has an implicit "node" condition, so this can prove the
 //     workerd/edge-light branches resolve correctly, but can never exercise "browser" in isolation — there is
 //     no flag to remove Node's own implicit condition.
 //   - esbuild, given explicit `conditions`/`platform` and no bundling of Node's own defaults: this is what a
-//     real bundler resolver looks like, and it's the one that can hit the exact bug §10 describes — a
+//     real bundler resolver looks like, and it's the one that can hit the exact bug this checks for — a
 //     Vite/webpack Workers build that also sets `browser: true`.
 import { execFileSync } from 'node:child_process';
 import esbuild from 'esbuild';

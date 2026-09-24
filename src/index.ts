@@ -1,6 +1,6 @@
 /**
- * Public API, js-plan.md §4. Wire field names on the way in and on the way out — no separate DTO naming to
- * memorize among sixteen passthrough fields.
+ * Public API. Wire field names on the way in and on the way out — no separate DTO naming to memorize among
+ * sixteen passthrough fields.
  */
 export { createPrestoPay } from './client.js';
 export type {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// A second, deliberately naive implementation of wire-contract.md, checking the vectors against themselves
+// A second, deliberately naive implementation of the wire contract, checking the vectors against themselves
 // with no SDK code involved: it rebuilds every canonical string, verifies the two staging captures against
 // Presto's certificate, verifies signatures.json against the test certificate, and round-trips every timestamp.
 import { readFileSync } from 'node:fs';
