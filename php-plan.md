@@ -16,6 +16,7 @@ SDK's API and implementation, and how the two are tested. §3 is shared with the
 | 6 | Keys | Private key: PKCS#8 PEM **or the onboarding PKCS#12 keystore directly** — `openssl_pkcs12_read` is in the extension already, so making the user run `openssl` first would be inventing a chore. Presto key: X.509 certificate (PEM or DER) or SPKI PEM |
 | 7 | Naming | Wire spelling, unchanged: `txnRefNum`, `notifyUrl`, `prestoMrn`. PHP's convention is camelCase for properties and parameters, so the wire names *are* idiomatic here — the one language of the four where no mapping is needed |
 | 8 | Static analysis | PHPStan at `max` with strict rules, `declare(strict_types=1)` in every file, no `mixed` in a public signature |
+| 9 | Code comments | Never cite this plan or the wire contract by filename or section number (no `php-plan.md §N`, no `wire-contract.md §N`). Explain the *why* in the comment itself, so it still reads once the plan is gone, renamed, or out of date |
 
 ## 2. Goals and non-goals
 

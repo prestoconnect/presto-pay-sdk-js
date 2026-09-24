@@ -16,6 +16,7 @@ SDK's API and implementation, and how the two are tested. §3 is shared with the
 | 6 | Keys | Private key: PKCS#8 PEM **or the onboarding PKCS#12 keystore directly** — `cryptography` reads `.p12`, so making the user run `openssl` first would be inventing a chore. Presto key: X.509 certificate (PEM or DER) or SPKI PEM |
 | 7 | Naming | **snake_case** on the Python API, mapped to the wire's camelCase by one mechanical rule (§4). Wire names would fail every linter in the ecosystem, and the mapping is `txn_ref_num` ↔ `txnRefNum` with no exceptions |
 | 8 | Typing | `py.typed`, mypy `--strict` in CI, no `Any` in a public signature |
+| 9 | Code comments | Never cite this plan or the wire contract by filename or section number (no `python-plan.md §N`, no `wire-contract.md §N`). Explain the *why* in the comment itself, so it still reads once the plan is gone, renamed, or out of date |
 
 ## 2. Goals and non-goals
 

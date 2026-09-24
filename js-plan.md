@@ -14,6 +14,7 @@ SDK's API and implementation, and how the two are tested.
 | 5 | Keys | Private key: unencrypted **PKCS#8 PEM**. Presto key: X.509 certificate (PEM or DER) or SPKI PEM. No PKCS#12, PKCS#1 or encrypted PEM in 0.1.0 |
 | 6 | Dependencies | Zero runtime dependencies. TypeScript `strict` |
 | 7 | Browsers | Refused: the `browser` export condition resolves to a module that throws. The private key must never reach a browser |
+| 8 | Code comments | Never cite this plan or the wire contract by filename or section number (no `js-plan.md §N`, no `wire-contract.md §N`). Explain the *why* in the comment itself, so it still reads once the plan is gone, renamed, or out of date |
 
 ## 2. Goals and non-goals
 
