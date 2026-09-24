@@ -1,0 +1,43 @@
+{
+  "name": "@prestouniverse/presto-pay-sdk",
+  "version": "0.0.0-dev.0",
+  "description": "Presto Pay SDK for JavaScript and TypeScript",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "workerd": "./dist/index.js",
+      "edge-light": "./dist/index.js",
+      "node": "./dist/index.js",
+      "browser": "./dist/browser.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:node": "vitest run --project node",
+    "test:watch": "vitest",
+    "check:package": "npm run build && publint && attw --pack .",
+    "check": "npm run typecheck && npm run test && npm run check:package"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.2",
+    "@cloudflare/vitest-pool-workers": "^0.9.0",
+    "@edge-runtime/vm": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "publint": "^0.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

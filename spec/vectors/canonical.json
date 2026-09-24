@@ -1,0 +1,71 @@
+[
+  {
+    "name": "worked-example-init-request",
+    "description": "wire-contract.md §4 worked example from Presto",
+    "body": {
+      "mid": "PW2401XH9KCX",
+      "prestoMrn": "PM240110XDSFC",
+      "txnType": "WebPay",
+      "txnRefNum": "TXN10001",
+      "displayDesc": "Order #12345",
+      "amount": 1200,
+      "currencyCode": "MYR",
+      "notifyUrl": "https://merchant.example.com/webhook/notify",
+      "redirectUrl": "https://merchant.example.com/redirect/TXN10001",
+      "ts": "20250423104500.000"
+    },
+    "canonical": "1200:MYR:Order #12345:PW2401XH9KCX:https://merchant.example.com/webhook/notify:PM240110XDSFC:https://merchant.example.com/redirect/TXN10001:20250423104500.000:TXN10001:WebPay"
+  },
+  {
+    "name": "captured-business-error-1201",
+    "description": "Business-error response captured from Presto staging. Verifies against keys/presto_ext_service_dev.der.",
+    "body": {
+      "success": false,
+      "ts": "20260924124938.038",
+      "errorCode": "1201",
+      "errorMessage": "Invalid input.",
+      "signature": "ORzXBr6JLqKR1LmOkbhL/ksH83GEUEgO7kPKzEAOKNhv2DlHnxobx1B705ZMdqQWGc9DMQp/e1HX8ATPJMq5Lpar89fqvAu6va2zNq5t/GcuwMJ3I/wRU++KpYujjWdQsaLhlBfgn/wjR4tq8MbMVqAPNKHlUSQ4iCpgf2eEa55QhIaXbBIH4UX64PHQfZ/2G4fSeGaObn5T06HBSPSUht5itzXe2dLA2/cuycsu+NoDXXKLZFh3+ON5s/UH9dmUlmoXZzYtsmhKhERBkstrrMfqZDaXpkMIDhHE7wPz4LjLeMocnkEh0wMo7SrQd3yKhf1b8Z+U85OdGJMtySkAFg=="
+    },
+    "canonical": "1201:Invalid input.:false:20260924124938.038",
+    "verifyAgainst": "presto_ext_service_dev.der"
+  },
+  {
+    "name": "captured-init-success-null-handling",
+    "description": "Successful init response captured from staging. additionalData is null and sorts first, settling the null-canonicalizes-as-empty-string rule (wire-contract.md §4).",
+    "body": {
+      "prestoMrn": "PM181019QGJWH4K",
+      "paymentRefNum": "PP260924K4H3DSF",
+      "txnRefNum": "PM202609244E33DA4FCCC7445B99821588791F2418",
+      "paymentStatus": "PendingAuthorise",
+      "paymentUrl": "https://hpp-staging.prestouniverse.com/PM181019QGJWH4K/PP260924K4H3DSF",
+      "userRefNum": "",
+      "amount": 200,
+      "currencyCode": "MYR",
+      "paymentRequestDate": "20260924133756.056",
+      "paymentFinalisedDate": "",
+      "additionalData": null,
+      "success": true,
+      "ts": "20260924133756.056",
+      "errorCode": "",
+      "errorMessage": "",
+      "signature": "YdmEUMfG61ZD781X2q2K5DhJesWgUHd7Z0t5I042PbPf72sqKGHExpl80XHZkbhPv1TiOJ0VjVD3cyY4IDnk722U7tm/gaoJe/uqeCGlAySh/Po03IgDQwQvlU138ghxVjIqs0rNOpB79UXsA3OWDeztoBK5qNJTzzeTYrMT5bVqynWSZVjTECcHnbXMFZ/X07ZhUsnD7DdTKBTCTfusWYr7Csthm1m6OyOzkG0CSkupKxKV79gyfAfyh1Fj4Z7SSaFU8OuC9htbgfftgghY7fSXyyKPwOLuVwhRhhEe3X1VTNk9oC5OD1ALtfu6ry8lQ/RYJJoVJXI00q7KfoCoiw=="
+    },
+    "canonical": ":200:MYR::::PP260924K4H3DSF:20260924133756.056:PendingAuthorise:https://hpp-staging.prestouniverse.com/PM181019QGJWH4K/PP260924K4H3DSF:PM181019QGJWH4K:true:20260924133756.056:PM202609244E33DA4FCCC7445B99821588791F2418:",
+    "verifyAgainst": "presto_ext_service_dev.der"
+  },
+  {
+    "name": "reject-non-integer-number",
+    "body": { "amount": 12.5, "mid": "M1" },
+    "reject": "amount is a non-integer number; the gateway sends integers only"
+  },
+  {
+    "name": "reject-array-value",
+    "body": { "itemList": [1, 2], "mid": "M1" },
+    "reject": "itemList is a native array; list fields are always JSON strings on the wire"
+  },
+  {
+    "name": "reject-object-value",
+    "body": { "nested": { "a": 1 }, "mid": "M1" },
+    "reject": "nested is an object value, which cannot occur on the wire"
+  }
+]

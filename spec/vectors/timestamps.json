@@ -1,0 +1,12 @@
+[
+  { "name": "worked-example", "epochMs": 1745376300000, "ts": "20250423104500.000" },
+  { "name": "epoch-zero-utc8", "epochMs": 0, "ts": "19700101080000.000" },
+  { "name": "day-rollover-forward", "description": "16:00 UTC rolls to the next day at UTC+8", "epochMs": 1735747200000, "ts": "20250102000000.000" },
+  { "name": "month-rollover", "epochMs": 1738367999999, "ts": "20250201075959.999" },
+  { "name": "year-rollover", "epochMs": 1735660799999, "ts": "20241231235959.999" },
+  { "name": "milliseconds-preserved", "epochMs": 1745376300123, "ts": "20250423104500.123" },
+  { "name": "reject-wrong-length", "invalidTs": "2025042310450.000", "reject": "not 18 characters" },
+  { "name": "reject-non-digits", "invalidTs": "2025042310450a.000", "reject": "not digits" },
+  { "name": "reject-invalid-calendar-date", "invalidTs": "20250230104500.000", "reject": "30 February does not exist" },
+  { "name": "reject-invalid-month", "invalidTs": "20251310000000.000", "reject": "month 13 does not exist" }
+]
