@@ -16,6 +16,7 @@ SDK's API and implementation, and how the two are tested. §3 is shared with the
 | 6 | Context | Every network method takes `ctx context.Context` first. No package-level client, no implicit timeouts beyond the one the caller sets |
 | 7 | Concurrency | `*Client` is safe for concurrent use and is meant to be built once at startup and shared, like `*sql.DB` |
 | 8 | Naming | Go initialisms win over wire spelling: `PrestoMRN`, `NotifyURL`, `DeviceIP`. Struct tags carry the wire name, so the mapping is visible in the type definition and `go vet`'s `structtag` check guards it |
+| 9 | Code comments | Never cite this plan or the wire contract by filename or section number (no `go-plan.md §N`, no `wire-contract.md §N`). Explain the *why* in the comment itself, so it still reads once the plan is gone, renamed, or out of date |
 
 ## 2. Goals and non-goals
 
