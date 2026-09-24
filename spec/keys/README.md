@@ -7,6 +7,7 @@ this directory may ever be reused for a live merchant.
 |------|------------|
 | `presto_ext_service_dev.der` | Presto's staging certificate (X.509, DER). Verifies responses and webhooks — §3.4 |
 | `presto_rm_keystore.p12` | Merchant RSA keypair, PKCS#12. Signs requests. Password `123123123`, alias `rm` |
+| `presto_rm_key-pkcs8.pem` | The same private key, pre-converted to unencrypted PKCS#8 PEM (see below) — what `test:staging` reads, so the suite does not need `openssl` on the machine running it |
 
 Staging configuration that goes with them:
 

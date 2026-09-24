@@ -65,6 +65,8 @@ export class PrestoPayApiError extends PrestoPayError {
   readonly errorMessage: string | undefined;
   readonly rawBody: string | undefined;
   readonly canonical: string | undefined;
+  /** On error `1005`: how far this host's clock is from the gateway's, `responseTs - requestTs` (§3.3). */
+  readonly clockOffsetMs: number | undefined;
 
   constructor(
     message: string,
@@ -75,6 +77,7 @@ export class PrestoPayApiError extends PrestoPayError {
       errorMessage?: string;
       rawBody?: string;
       canonical?: string;
+      clockOffsetMs?: number;
     },
   ) {
     super(message, options);
@@ -84,6 +87,7 @@ export class PrestoPayApiError extends PrestoPayError {
     this.errorMessage = options.errorMessage;
     this.rawBody = options.rawBody;
     this.canonical = options.canonical;
+    this.clockOffsetMs = options.clockOffsetMs;
   }
 }
 

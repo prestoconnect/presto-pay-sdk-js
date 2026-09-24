@@ -440,3 +440,38 @@ describe('client.webhooks', () => {
     expect(event.paymentStatus).toBe('Authorised');
   });
 });
+
+describe('1005 clock skew reporting (§3.3)', () => {
+  it('reports the observed offset between the request ts and the gateway ts', async () => {
+    const skewMs = 25 * 60_000; // 25 minutes fast, outside the 15-minute window
+    const requestNow = Date.now();
+    const client = createPrestoPay({
+      environment: { baseUrl: 'https://fake.presto.invalid' },
+      merchantId: 'TESTMID',
+      privateKey: merchantPrivateKeyPem,
+      prestoPublicKey: gatewayCertPem,
+      now: () => requestNow + skewMs,
+      fetch: createFakeGateway({
+        merchantPublicKeyPem,
+        gatewayPrivateKeyPem,
+        handle: () => ({
+          body: {
+            success: false,
+            ts: formatGatewayTimestamp(requestNow),
+            errorCode: '1005',
+            errorMessage: 'Exceeded validity period.',
+          },
+        }),
+      }),
+    });
+    const promise = client.payments.query({ prestoMrn: 'PM1', txnRefNum: 'order-1' });
+    await promise.catch((err: PrestoPayApiError) => {
+      expect(err.errorCode).toBe('1005');
+      expect(err.clockOffsetMs).toBeLessThan(0); // gateway ts is earlier than our (skewed-fast) request ts
+      expect(Math.abs(err.clockOffsetMs as number)).toBeGreaterThanOrEqual(skewMs - 1000);
+      expect(err.message).toMatch(/clock appears to be off/);
+      expect(err.message).toContain(String(err.clockOffsetMs));
+    });
+    await expect(promise).rejects.toBeInstanceOf(PrestoPayApiError);
+  });
+});
