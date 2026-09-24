@@ -9,7 +9,7 @@ import { canonicalize, parseSignedBody, type FlatBody, type JsonObject } from '.
 import { importPrivateKey, importPublicKey, sign, verify } from './internal/crypto.js';
 import { publicKeyMaterial, privateKeyDer } from './internal/pem.js';
 import { send, type SendRequest } from './internal/send.js';
-import { formatGatewayTimestamp } from './internal/timestamp.js';
+import { formatGatewayTimestamp, parseGatewayTimestamp } from './internal/timestamp.js';
 import type { RetryOptions } from './retry.js';
 import { USER_AGENT } from './version.js';
 import { buildInitBody, buildQueryBody, buildRefundBody, buildReverseBody } from './payments/wire.js';
@@ -102,6 +102,15 @@ function resolveBaseUrl(environment: Environment): string {
   });
 }
 
+/** `responseTs - requestTs`, in milliseconds — the offset a skewed host clock would show up as (§3.3). */
+function clockOffsetMsBetween(requestTs: string, responseTs: string): number | undefined {
+  try {
+    return parseGatewayTimestamp(responseTs).getTime() - parseGatewayTimestamp(requestTs).getTime();
+  } catch {
+    return undefined;
+  }
+}
+
 interface CallSpec<T> {
   readonly operation: Operation;
   readonly resendSafe: boolean;
@@ -155,9 +164,11 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
     return { 'content-type': 'application/json; charset=UTF-8', 'user-agent': USER_AGENT };
   }
 
-  async function signedBody(wireBody: FlatBody): Promise<Uint8Array> {
+  async function signedBody(wireBody: FlatBody, onTs?: (ts: string) => void): Promise<Uint8Array> {
     const privateKey = await getPrivateKey();
-    const withMidTs: FlatBody = { ...wireBody, mid: options.merchantId, ts: formatGatewayTimestamp(now()) };
+    const ts = formatGatewayTimestamp(now());
+    onTs?.(ts);
+    const withMidTs: FlatBody = { ...wireBody, mid: options.merchantId, ts };
     const canonical = canonicalize(withMidTs);
     const signature = await sign(privateKey, canonical);
     const withSignature: FlatBody = { ...withMidTs, signature };
@@ -170,6 +181,7 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       CallSpec<T>,
       'operation' | 'resendSafe' | 'reconcileBy' | 'expectedPrestoMrn' | 'expectedTxnRefNum' | 'mapResponse'
     >,
+    lastRequestTs?: string,
   ): Promise<T> {
     const { operation, resendSafe, reconcileBy } = spec;
     const rawBody = redact(result.bodyText, redactErrorBodies) ?? result.bodyText;
@@ -236,7 +248,22 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       // §3.9: a duplicate txnRefNum on init proves a payment record exists, possibly an authorised one.
       const isDuplicateInit = operation === 'init' && errorCode === '1203';
       const attachCanonical = errorCode === '1006' || errorCode === '1007';
-      throw new PrestoPayApiError(errorMessage.length > 0 ? errorMessage : `business error ${errorCode}`, {
+      // §3.3: a skewed host clock fails every request with 1005 and has no other way to find out why, so the
+      // offset between what this host sent and what the gateway's own clock says is folded into the message.
+      const isClockSkew = errorCode === '1005';
+      const clockOffsetMs =
+        isClockSkew && lastRequestTs !== undefined && typeof body.ts === 'string'
+          ? clockOffsetMsBetween(lastRequestTs, body.ts)
+          : undefined;
+      const message =
+        isClockSkew && clockOffsetMs !== undefined
+          ? `${errorMessage || 'request timestamp outside the validity window'} (this host's clock appears to ` +
+            `be off by ${clockOffsetMs}ms relative to the gateway; request ts was ${lastRequestTs}, gateway ts ` +
+            `was ${body.ts})`
+          : errorMessage.length > 0
+            ? errorMessage
+            : `business error ${errorCode}`;
+      throw new PrestoPayApiError(message, {
         operation,
         kind: 'business',
         httpStatus: 200,
@@ -246,6 +273,7 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
         mayHaveTakenEffect: isDuplicateInit,
         ...(isDuplicateInit && reconcileBy ? { reconcileBy } : {}),
         ...(attachCanonical ? { canonical } : {}),
+        ...(clockOffsetMs !== undefined ? { clockOffsetMs } : {}),
       });
     }
 
@@ -292,12 +320,13 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
   }
 
   async function call<T>(spec: CallSpec<T>, callOptions?: CallOptions): Promise<T> {
+    let lastRequestTs: string | undefined;
     const sendRequest: SendRequest = {
       operation: spec.operation,
       resendSafe: spec.resendSafe,
       url: `${baseUrl}${spec.path}`,
       headers: headers(),
-      buildBody: () => signedBody(spec.wireBody),
+      buildBody: () => signedBody(spec.wireBody, (ts) => (lastRequestTs = ts)),
       ...(spec.reconcileBy ? { reconcileBy: spec.reconcileBy } : {}),
     };
     const result = await send(sendRequest, {
@@ -306,7 +335,7 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       ...(callOptions?.signal ? { signal: callOptions.signal } : {}),
       ...(options.retryReads ? { retryReads: options.retryReads } : {}),
     });
-    return handleResponse(result, spec);
+    return handleResponse(result, spec, lastRequestTs);
   }
 
   const payments: PaymentsApi = {

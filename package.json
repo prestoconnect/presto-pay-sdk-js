@@ -27,15 +27,19 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:node": "vitest run --project node",
+    "test:workers": "vitest run --config vitest.workers.config.ts",
+    "test:edge": "vitest run --config vitest.edge.config.ts",
+    "test:staging": "vitest run --config vitest.staging.config.ts",
     "test:watch": "vitest",
-    "check:package": "npm run build && publint && attw --pack .",
-    "check": "npm run typecheck && npm run test && npm run check:package"
+    "check:package": "npm run build && publint && attw --pack . --profile esm-only && node scripts/check-export-conditions.mjs && node scripts/check-bundle-size.mjs",
+    "check": "npm run typecheck && npm run test && npm run test:workers && npm run test:edge && npm run check:package"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@cloudflare/vitest-pool-workers": "^0.9.0",
     "@edge-runtime/vm": "^5.0.0",
     "@types/node": "^22.10.0",
+    "esbuild": "^0.28.2",
     "publint": "^0.3.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
