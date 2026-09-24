@@ -1,5 +1,5 @@
 /**
- * `fromEnv`, js-plan.md §4 / §8: reads the four `PRESTOPAY_*` variables into a `PrestoPayOptions`. Works with
+ * `fromEnv` reads the four `PRESTOPAY_*` variables into a `PrestoPayOptions`. Works with
  * `process.env`, a Workers `env` binding, or Vercel's env object — anything shaped like a string record.
  */
 import { PrestoPayConfigError } from './errors.js';

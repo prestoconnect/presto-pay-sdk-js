@@ -1,5 +1,5 @@
 /**
- * `requestNotSent` classification, js-plan.md §6: `true` only for an **allowlist** of connect-phase codes.
+ * `requestNotSent` classification: `true` only for an **allowlist** of connect-phase codes.
  * Everything else — including codes this list does not know about, `ECONNRESET`, and `UND_ERR_SOCKET` — is
  * `false`, because the safe assumption once bytes may have left the process is that they arrived.
  *

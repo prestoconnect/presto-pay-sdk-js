@@ -1,5 +1,5 @@
 /**
- * Gateway timestamps, wire-contract.md §3: `yyyyMMddHHmmss.SSS` at a fixed UTC+08:00.
+ * Gateway timestamps: `yyyyMMddHHmmss.SSS` at a fixed UTC+08:00.
  *
  * The offset is fixed on purpose. `Asia/Kuala_Lumpur` resolves to +08:00 today, and a zone whose rules can be
  * changed by legislation has no business inside a signature. Shifting the epoch and reading UTC fields also

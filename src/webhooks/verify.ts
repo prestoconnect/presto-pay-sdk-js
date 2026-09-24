@@ -1,5 +1,5 @@
 /**
- * Webhook verification, wire-contract.md §7 / js-plan.md §3.7, in order: parse the raw body, check the
+ * Webhook verification, in order: parse the raw body, check the
  * signature, map fields, check `mid` against the configured set, then check freshness. `mid` and freshness come
  * after signature verification because a forged event fails signature first regardless of what it claims.
  */

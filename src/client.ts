@@ -1,5 +1,5 @@
 /**
- * `createPrestoPay`, js-plan.md §4: a synchronous factory (so it works as a module-level singleton, and per
+ * `createPrestoPay`: a synchronous factory (so it works as a module-level singleton, and per
  * request in Workers) whose PEM structure is checked synchronously, while the Web Crypto import runs lazily on
  * first use and is cached — importKey is the expensive part, signing is not.
  */
@@ -42,7 +42,7 @@ export type Environment = 'staging' | 'production' | { readonly baseUrl: string 
 export interface PrestoPayOptions {
   readonly environment: Environment;
   readonly merchantId: string;
-  /** Unencrypted PKCS#8 PEM text (js-plan.md §1). */
+  /** Unencrypted PKCS#8 PEM text. */
   readonly privateKey: string;
   /** A certificate (PEM or DER) or SPKI PEM; an array while a key rotation overlap is in progress (§3.10). */
   readonly prestoPublicKey: string | Uint8Array | ReadonlyArray<string | Uint8Array>;
@@ -68,7 +68,7 @@ export interface PaymentsApi {
 
 export interface RawApi {
   /** Signs, sends, verifies and returns the parsed object — the escape hatch for an endpoint this SDK does not
-   *  wrap yet (js-plan.md §4). `body` must not include `mid`, `ts` or `signature`; the client adds them. */
+   *  wrap yet. `body` must not include `mid`, `ts` or `signature`; the client adds them. */
   post(path: string, body: FlatBody, options?: CallOptions): Promise<JsonObject>;
   /** Signs a canonical string with this client's private key. */
   sign(canonicalString: string): Promise<string>;

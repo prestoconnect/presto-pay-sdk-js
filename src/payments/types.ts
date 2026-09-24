@@ -1,4 +1,4 @@
-/** Wire field names on the way in and on the way out (js-plan.md §4) — no separate DTO naming to memorize. */
+/** Wire field names on the way in and on the way out — no separate DTO naming to memorize. */
 import type { PaymentMethod, PaymentStatus, RefundStatus, ReversalStatus, TxnType } from './constants.js';
 
 export interface LineItem {

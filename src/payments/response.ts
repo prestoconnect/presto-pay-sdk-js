@@ -1,7 +1,7 @@
 /**
- * Field mapping, js-plan.md §3.5 / §5 "Incoming": a successful response carries every documented field, using
- * `""` or `null` interchangeably for the ones that have no value (confirmed unstable per field, §3.5), so both
- * spellings normalize to `undefined` on optional fields. A required field that arrives empty is a malformed body.
+ * Field mapping: a successful response carries every documented field, using `""` or `null` interchangeably for
+ * the ones that have no value (confirmed unstable per field), so both spellings normalize to `undefined` on
+ * optional fields. A required field that arrives empty is a malformed body.
  */
 import type { Operation, ReconcileKey } from '../errors.js';
 import { PrestoPayResponseError } from '../errors.js';

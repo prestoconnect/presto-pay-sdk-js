@@ -1,9 +1,8 @@
 /**
- * Shared validation helpers for the four operations (js-plan.md §3.8, §5).
+ * Shared validation helpers for the four operations.
  *
  * Length maxima are documentation, not gateway limits (Presto enforces none today) — they are only checked in
- * `strict` mode, where the point is to catch a contract violation in staging rather than in production
- * (js-plan.md §4, "Choices" table).
+ * `strict` mode, where the point is to catch a contract violation in staging rather than in production.
  */
 import type { Operation } from '../errors.js';
 import { PrestoPayConfigError } from '../errors.js';

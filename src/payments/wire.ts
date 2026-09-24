@@ -1,7 +1,6 @@
 /**
- * Validates a request and builds its wire body (js-plan.md §5 "Outgoing"). The result never includes `mid`,
- * `ts` or `signature` — those are added per attempt by the client, since `ts` must be fresh every time
- * (js-plan.md §3.9).
+ * Validates a request and builds its wire body. The result never includes `mid`, `ts` or `signature` — those
+ * are added per attempt by the client, since `ts` must be fresh every time.
  */
 import { formatGatewayTimestamp } from '../internal/timestamp.js';
 import type { InitRequest, LineItem, QueryRequest, RefundRequest, ReverseRequest } from './types.js';

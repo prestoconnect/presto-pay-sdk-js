@@ -1,7 +1,7 @@
 /**
- * `AbortSignal.any` combines the whole-call deadline with the caller's own `signal` (js-plan.md §6). It landed in
- * Node 20.3, but its availability on the oldest `workerd` and `edge-runtime` this package targets is unproven, so
- * a small manual fallback stands in when it is missing.
+ * `AbortSignal.any` combines the whole-call deadline with the caller's own `signal`. It landed in Node 20.3, but
+ * its availability on the oldest `workerd` and `edge-runtime` this package targets is unproven, so a small
+ * manual fallback stands in when it is missing.
  */
 export function combineSignals(signals: readonly AbortSignal[]): AbortSignal {
   const present = signals.filter((signal): signal is AbortSignal => signal !== undefined);

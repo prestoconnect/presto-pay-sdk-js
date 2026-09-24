@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// js-plan.md §11: "a bundle size budget." Bundles the built dist/index.js with esbuild (minified, tree-shaken)
-// the way a consumer's bundler would, then measures the gzipped size — zero runtime dependencies means this
-// should stay small, and a regression here is a real regression a merchant's bundle will carry.
+// A bundle size budget. Bundles the built dist/index.js with esbuild (minified, tree-shaken) the way a
+// consumer's bundler would, then measures the gzipped size — zero runtime dependencies means this should stay
+// small, and a regression here is a real regression a merchant's bundle will carry.
 import { readFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import esbuild from 'esbuild';

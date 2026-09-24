@@ -1,7 +1,7 @@
 /**
- * The one HTTP code path every runtime shares (js-plan.md §6): `fetch` with `redirect: 'manual'`, a whole-call
- * deadline, and the retry policy from wire-contract.md §9 — `query` retries on transport errors and on 5xx;
- * `init`, `reverse` and `refund` retry only when the request certainly never left the process.
+ * The one HTTP code path every runtime shares: `fetch` with `redirect: 'manual'`, a whole-call deadline, and
+ * the retry policy — `query` retries on transport errors and on 5xx; `init`, `reverse` and `refund` retry only
+ * when the request certainly never left the process.
  *
  * This module does not parse or verify response bodies — that needs the signing key and the field tables, which
  * belong to the payments and webhooks modules. It hands back whatever the gateway sent for any status, and
@@ -16,7 +16,7 @@ import { isRequestNotSentError } from './http.js';
 
 export interface SendRequest {
   readonly operation: Operation;
-  /** Only `query` is safe to resend once a request may have reached the gateway (wire-contract.md §9). */
+  /** Only `query` is safe to resend once a request may have reached the gateway. */
   readonly resendSafe: boolean;
   readonly url: string;
   readonly headers: Readonly<Record<string, string>>;

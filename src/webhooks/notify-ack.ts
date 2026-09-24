@@ -1,5 +1,5 @@
 /**
- * The merchant's reply to a webhook delivery, wire-contract.md §7: HTTP 200 with `{"resend":false}` (accepted)
+ * The merchant's reply to a webhook delivery: HTTP 200 with `{"resend":false}` (accepted)
  * or `{"resend":true}` (ask Presto to resend). Presto retries on its own backoff of 1, 2, 5 and 10 minutes, so
  * `forError` matters: answering a permanent failure — bad signature, a foreign `mid`, a stale `ts` — with
  * `resend:true` buys four redeliveries that fail identically. Those map to `ok`; a merchant's own transient

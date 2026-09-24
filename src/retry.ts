@@ -1,6 +1,6 @@
 /**
- * The `retryReads` policy, js-plan.md §6. Named for what it governs — only `query`, per wire-contract.md §9 — so
- * that a top-level `retry: { maxRetries: 2 }` never reads as "the SDK retries my payments twice."
+ * The `retryReads` policy. Named for what it governs — only `query` — so that a top-level
+ * `retry: { maxRetries: 2 }` never reads as "the SDK retries my payments twice."
  */
 
 import { PrestoPayTransportError } from './errors.js';
