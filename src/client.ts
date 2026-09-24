@@ -30,6 +30,7 @@ import type {
   ReverseRequest,
   ReverseResponse,
 } from './payments/types.js';
+import { createWebhookVerifier, type WebhookVerifier } from './webhooks/verify.js';
 
 const BASE_URLS: Record<string, string> = {
   staging: 'https://presto-stg-ext.enovax.com',
@@ -51,6 +52,7 @@ export interface PrestoPayOptions {
   readonly redactErrorBodies?: boolean;
   readonly fetch?: typeof fetch;
   readonly now?: () => number;
+  readonly webhooks?: { readonly maxTimestampAgeMs?: number };
 }
 
 export interface CallOptions {
@@ -77,6 +79,7 @@ export interface RawApi {
 export interface PrestoPayClient {
   readonly payments: PaymentsApi;
   readonly raw: RawApi;
+  readonly webhooks: WebhookVerifier;
 }
 
 function resolveBaseUrl(environment: Environment): string {
@@ -422,5 +425,14 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
     },
   };
 
-  return { payments, raw };
+  const webhooks = createWebhookVerifier({
+    merchantId: options.merchantId,
+    prestoPublicKey: options.prestoPublicKey,
+    ...(options.webhooks?.maxTimestampAgeMs !== undefined
+      ? { maxTimestampAgeMs: options.webhooks.maxTimestampAgeMs }
+      : {}),
+    ...(options.now ? { now: options.now } : {}),
+  });
+
+  return { payments, raw, webhooks };
 }

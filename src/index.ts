@@ -1,9 +1,6 @@
 /**
  * Public API, js-plan.md §4. Wire field names on the way in and on the way out — no separate DTO naming to
  * memorize among sixteen passthrough fields.
- *
- * Webhook verification and `fromEnv` land in milestone 5; this covers the client and the four payment operations
- * (milestone 4).
  */
 export { createPrestoPay } from './client.js';
 export type {
@@ -16,6 +13,14 @@ export type {
 } from './client.js';
 
 export { importPrestoPublicKey, importPrivateKey } from './keys.js';
+
+export { createWebhookVerifier } from './webhooks/verify.js';
+export type { WebhookVerifier, WebhookVerifierOptions } from './webhooks/verify.js';
+export type { WebhookEvent } from './webhooks/types.js';
+export { NotifyAck } from './webhooks/notify-ack.js';
+
+export { fromEnv } from './env.js';
+export type { EnvRecord } from './env.js';
 
 export {
   canonicalizeText as canonicalize,
