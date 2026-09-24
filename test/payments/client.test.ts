@@ -11,7 +11,9 @@ import {
 } from '../../src/errors.js';
 import { TxnType } from '../../src/payments/constants.js';
 import { createFakeGateway, type HandleResult } from '../support/fake-gateway.js';
-import type { JsonObject } from '../../src/internal/canonical.js';
+import { canonicalize, type JsonObject } from '../../src/internal/canonical.js';
+import { importPrivateKey, sign } from '../../src/internal/crypto.js';
+import { formatGatewayTimestamp } from '../../src/internal/timestamp.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const specDir = path.resolve(here, '../../spec');
@@ -406,5 +408,35 @@ describe('raw escape hatch', () => {
     const signedBody = { ...body, signature };
     expect(await client.raw.verifyBody(signedBody)).toBe(true);
     expect(await client.raw.verifyBody({ ...signedBody, amount: 999 })).toBe(false);
+  });
+});
+
+describe('client.webhooks', () => {
+  it('is wired to the client\'s own merchantId and prestoPublicKey', async () => {
+    const client = createPrestoPay({
+      environment: { baseUrl: 'https://fake.presto.invalid' },
+      merchantId: 'TESTMID',
+      privateKey: merchantPrivateKeyPem,
+      prestoPublicKey: gatewayCertPem,
+    });
+    const gatewayKey = await importPrivateKey(gatewayPrivateKeyPem, 'test');
+    const body: JsonObject = {
+      eventCode: 'Authorised',
+      mid: 'TESTMID',
+      prestoMrn: 'PM1',
+      paymentRefNum: 'PP1',
+      txnRefNum: 'T1',
+      eventRefNum: 'EVT1',
+      eventTs: formatGatewayTimestamp(Date.now()),
+      amount: 1000,
+      currencyCode: 'MYR',
+      ts: formatGatewayTimestamp(Date.now()),
+      success: true,
+    };
+    const canonical = canonicalize(body);
+    const signature = await sign(gatewayKey, canonical);
+    const event = await client.webhooks.verify(JSON.stringify({ ...body, signature }));
+    expect(event.mid).toBe('TESTMID');
+    expect(event.paymentStatus).toBe('Authorised');
   });
 });

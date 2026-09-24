@@ -107,7 +107,8 @@ function mapRefundDetail(element: JsonObject, ctx: MapContext): RefundDetail {
   return out as unknown as RefundDetail;
 }
 
-function mapPaymentDetail(element: JsonObject, ctx: MapContext): PaymentDetail {
+/** Exported for reuse by the webhooks mapper — `paymentDetails` has the identical shape there (§3.8). */
+export function mapPaymentDetail(element: JsonObject, ctx: MapContext): PaymentDetail {
   const out: Record<string, unknown> = { amount: requireInteger(element, 'amount', ctx) };
   set(out, 'method', optionalString(element, 'method'));
   set(out, 'cardBin', optionalString(element, 'cardBin'));
