@@ -30,9 +30,4 @@ describe('sign / verify round trip', () => {
     await expect(verify(publicKey, 'a:b:c', '')).resolves.toBe(false);
   });
 
-  it('imports the real staging certificate and verifies the captured vectors (see test/vectors)', async () => {
-    const staging = readFileSync(path.join(specDir, 'keys/presto_ext_service_dev.der'));
-    const key = await importPublicKey(new Uint8Array(staging), 'prestoPublicKey');
-    expect(key.type).toBe('public');
-  });
 });

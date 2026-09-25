@@ -18,7 +18,7 @@
   },
   {
     "name": "captured-business-error-1201",
-    "description": "Business-error response captured from Presto staging. Verifies against keys/presto_ext_service_dev.der.",
+    "description": "Business-error response captured from Presto staging; retained as a wire-format example.",
     "body": {
       "success": false,
       "ts": "20260924124938.038",
@@ -26,8 +26,7 @@
       "errorMessage": "Invalid input.",
       "signature": "ORzXBr6JLqKR1LmOkbhL/ksH83GEUEgO7kPKzEAOKNhv2DlHnxobx1B705ZMdqQWGc9DMQp/e1HX8ATPJMq5Lpar89fqvAu6va2zNq5t/GcuwMJ3I/wRU++KpYujjWdQsaLhlBfgn/wjR4tq8MbMVqAPNKHlUSQ4iCpgf2eEa55QhIaXbBIH4UX64PHQfZ/2G4fSeGaObn5T06HBSPSUht5itzXe2dLA2/cuycsu+NoDXXKLZFh3+ON5s/UH9dmUlmoXZzYtsmhKhERBkstrrMfqZDaXpkMIDhHE7wPz4LjLeMocnkEh0wMo7SrQd3yKhf1b8Z+U85OdGJMtySkAFg=="
     },
-    "canonical": "1201:Invalid input.:false:20260924124938.038",
-    "verifyAgainst": "presto_ext_service_dev.der"
+    "canonical": "1201:Invalid input.:false:20260924124938.038"
   },
   {
     "name": "captured-init-success-null-handling",
@@ -50,8 +49,7 @@
       "errorMessage": "",
       "signature": "YdmEUMfG61ZD781X2q2K5DhJesWgUHd7Z0t5I042PbPf72sqKGHExpl80XHZkbhPv1TiOJ0VjVD3cyY4IDnk722U7tm/gaoJe/uqeCGlAySh/Po03IgDQwQvlU138ghxVjIqs0rNOpB79UXsA3OWDeztoBK5qNJTzzeTYrMT5bVqynWSZVjTECcHnbXMFZ/X07ZhUsnD7DdTKBTCTfusWYr7Csthm1m6OyOzkG0CSkupKxKV79gyfAfyh1Fj4Z7SSaFU8OuC9htbgfftgghY7fSXyyKPwOLuVwhRhhEe3X1VTNk9oC5OD1ALtfu6ry8lQ/RYJJoVJXI00q7KfoCoiw=="
     },
-    "canonical": ":200:MYR::::PP260924K4H3DSF:20260924133756.056:PendingAuthorise:https://hpp-staging.prestouniverse.com/PM181019QGJWH4K/PP260924K4H3DSF:PM181019QGJWH4K:true:20260924133756.056:PM202609244E33DA4FCCC7445B99821588791F2418:",
-    "verifyAgainst": "presto_ext_service_dev.der"
+    "canonical": ":200:MYR::::PP260924K4H3DSF:20260924133756.056:PendingAuthorise:https://hpp-staging.prestouniverse.com/PM181019QGJWH4K/PP260924K4H3DSF:PM181019QGJWH4K:true:20260924133756.056:PM202609244E33DA4FCCC7445B99821588791F2418:"
   },
   {
     "name": "reject-non-integer-number",

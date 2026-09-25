@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // A second, deliberately naive implementation of the wire contract, checking the vectors against themselves
-// with no SDK code involved: it rebuilds every canonical string, verifies the two staging captures against
-// Presto's certificate, verifies signatures.json against the test certificate, and round-trips every timestamp.
+// with no SDK code involved: it rebuilds every canonical string, verifies signatures.json against the test
+// certificate, and round-trips every timestamp.
 import { readFileSync } from 'node:fs';
-import { createVerify, X509Certificate } from 'node:crypto';
+import { createVerify } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -57,15 +57,6 @@ for (const vector of canonicalVectors) {
   }
   check(actual === vector.canonical, `${vector.name}: canonical mismatch\n  expected: ${vector.canonical}\n  actual:   ${actual}`);
 
-  if (vector.verifyAgainst) {
-    const certDer = readFileSync(path.join(specDir, 'keys', vector.verifyAgainst));
-    const cert = new X509Certificate(certDer);
-    const verifier = createVerify('RSA-SHA256');
-    verifier.update(actual, 'utf8');
-    verifier.end();
-    const ok = verifier.verify(cert.publicKey, Buffer.from(vector.body.signature, 'base64'));
-    check(ok, `${vector.name}: signature does not verify against ${vector.verifyAgainst}`);
-  }
 }
 
 // --- timestamps ---

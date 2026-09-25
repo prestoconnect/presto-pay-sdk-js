@@ -69,7 +69,8 @@ Optional fields that are not set are **omitted**, never sent as `null` **[P]**.
 
 Two worked/captured examples verify this rule set end to end, including the null-canonicalizes-as-empty-string
 rule: see `vectors/canonical.json` (`worked-example-init-request`, `captured-business-error-1201`,
-`captured-init-success-null-handling`), the latter two verified against `keys/presto_ext_service_dev.der`.
+`captured-init-success-null-handling`). The captured response signatures remain as wire examples; the
+corresponding staging certificate is intentionally not committed.
 
 **Algorithm**
 

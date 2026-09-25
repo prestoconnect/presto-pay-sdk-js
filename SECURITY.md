@@ -15,9 +15,8 @@ to report privately. Include:
 
 ## Scope
 
-In scope: this package's own code (`src/`). Out of scope: the staging-only test credentials committed under
-`sample/my-store/keys/` and `spec/keys/` — those are intentionally public, non-production material (see
-[`spec/keys/README.md`](spec/keys/README.md)), not a leak.
+In scope: this package's own code (`src/`). Test fixtures under `spec/keys/` are generated and non-production;
+real merchant or Presto staging credentials must never be committed.
 
 ## Supported versions
 

@@ -1,8 +1,7 @@
 # Presto Pay SDK — MyStore demo
 
-A runnable demo of `@prestouniverse/presto-pay-sdk` against **Presto's real staging gateway**, using the
-`11StreetMock` demo merchant and runtime keys bundled in this demo's `keys/` directory. This is
-staging test material, not production credentials — nothing here may be reused for a live merchant.
+A runnable demo of `@prestouniverse/presto-pay-sdk` against **Presto's real staging gateway**. Staging
+credentials are not bundled; provide your own key files and merchant identifiers through `.env`.
 
 The checkout page models a merchant deciding **where the shopper picks a payment method**: a toggle switches
 between letting Presto's hosted payment page collect it (`allowedPaymentMethods` omitted) and collecting it on
@@ -59,5 +58,5 @@ payment routes (`init`/`query`/`reverse`/`refund`) work over plain `localhost` r
 
 ## Configuration
 
-See `.env.example`. Nothing is required to get started — every value defaults to the committed staging demo
-credentials — but `PORT` and `PUBLIC_URL` are worth overriding, per above.
+See `.env.example`. `PRESTOPAY_MID`, `PRESTO_MRN`, `PRESTOPAY_PRIVATE_KEY_FILE`, and
+`PRESTOPAY_PUBLIC_KEY_FILE` are required; `PORT` and `PUBLIC_URL` are optional.
