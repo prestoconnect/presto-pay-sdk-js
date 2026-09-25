@@ -26,11 +26,16 @@ Everything below is pre-1.0 groundwork; nothing has been published to npm yet.
   `attw --profile esm-only`, export-condition resolution against both Node and a real bundler resolver via
   esbuild, and a gzipped bundle-size budget), and a staging smoke suite gated behind
   `PRESTOPAY_STAGING_SMOKE=1`.
-- CI (`.github/workflows/ci.yml`): runs `npm run check` on push and PR across Node 18.20, 20, 22, 24 and 26.
-  `.github/workflows/release.yml` publishes to npm with provenance on a `v*` tag. `vite` is pinned to `^6.4.3`
-  via a package.json `overrides` entry so the Node 18.20 leg can run vitest at all — vitest 3's own default
-  resolves the vite 7 line, which dropped Node 18 support (`engines.node: "^20.19.0 || >=22.12.0"`), so without
-  the override that CI leg couldn't run the test tooling meant to verify the Node 18.20 floor.
+- CI (`.github/workflows/ci.yml`) on push and PR: one `checks` job (typecheck, the workerd/edge-runtime suites,
+  and package hygiene) on a single modern Node, plus a `test-node` job matrixed across Node 18.20, 20, 22, 24
+  and 26 running only the plain Node test project. The split matters, not just for CI minutes: the workerd/edge
+  suites run inside simulated runtimes regardless of host Node, and some of that tooling — miniflare's `undici`
+  (`engines.node: ">=20.18.1"`) and `@arethetypeswrong/cli` (`engines.node: ">=20"`) — doesn't run on Node 18.20
+  at all, so folding them into the 18.20 leg would silently skip or break the tooling meant to verify that leg,
+  not exercise the SDK. `vite` is separately pinned to `^6.4.3` via a package.json `overrides` entry so vitest
+  itself (which the 18.20 leg does need, for `test:node`) can still run there — vitest 3's own default resolves
+  the vite 7 line, which dropped Node 18 support (`engines.node: "^20.19.0 || >=22.12.0"`).
+  `.github/workflows/release.yml` publishes to npm with provenance on a `v*` tag.
 - Support floor lowered to **Node 18.20+** (was 22.12+). Verified end-to-end on Node 18.20.5: signing,
   verification, and the full send path all work, since Node 18's Web Crypto and `fetch` globals are present by
   its final LTS patch. The one real gap is that Node 18 only exposes global `crypto` on the main thread, not

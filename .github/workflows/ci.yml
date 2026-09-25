@@ -6,7 +6,31 @@ on:
   pull_request:
 
 jobs:
-  verify:
+  # typecheck, the workerd/edge-runtime suites, and package hygiene checks don't depend on which Node version
+  # hosts the process: the workerd/edge-runtime suites run inside simulated runtimes (miniflare / @edge-runtime/vm)
+  # regardless of host Node, and some of that tooling (miniflare's undici, @arethetypeswrong/cli) itself requires
+  # Node >=20 to run at all. Only the plain Node-environment tests below genuinely vary by host Node version.
+  checks:
+    runs-on: ubuntu-latest
+    name: Typecheck, workerd/edge suites, package checks
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - run: npm run typecheck
+      - run: npm run test:workers
+      - run: npm run test:edge
+      - run: npm run check:package
+
+  test-node:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -27,5 +51,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck, test (node + workerd + edge-runtime), and package checks
-        run: npm run check
+      - name: Test (node)
+        run: npm run test:node
