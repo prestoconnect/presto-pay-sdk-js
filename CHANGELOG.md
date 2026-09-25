@@ -2,9 +2,9 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.1.0 - 2026-09-25
 
-Everything below is pre-1.0 groundwork; nothing has been published to npm yet.
+First published release.
 
 ### Added
 
@@ -18,8 +18,8 @@ Everything below is pre-1.0 groundwork; nothing has been published to npm yet.
 - Webhook verification (`createWebhookVerifier`, `presto.webhooks.verify`), `NotifyAck`, and `fromEnv`.
 - `1005` business errors now report the observed clock offset between the request and response timestamps
   (`PrestoPayApiError.clockOffsetMs`).
-- `spec/` vendored locally (wire-contract.md, vectors, and throwaway test keys) as a plain copy of
-  `presto-pay-spec`, not a git submodule. Real Presto staging credentials are supplied externally.
+- `spec/` vectors and throwaway test keys are kept locally for contract testing. Real Presto staging credentials
+  are supplied externally.
 - Test infrastructure: vector-driven and unit tests on Node, a workerd smoke suite via
   `@cloudflare/vitest-pool-workers`, a custom `@edge-runtime/vm`-backed environment for the edge-runtime leg
   (no maintained `vitest-environment-edge-runtime` package exists on npm), package hygiene checks (`publint`,
@@ -43,13 +43,9 @@ Everything below is pre-1.0 groundwork; nothing has been published to npm yet.
   and the vitest Node project backfills the global in a test-only setup file
   (`test/setup/node18-crypto-polyfill.ts`) since vitest isolates each test file that way.
 
-### Known gaps before 0.1.0
+### Known limitations
 
 - PKCS#12 private-key import, encrypted PEM on Node, and a Bun/Deno support statement are explicitly deferred
   to a later milestone.
-- `presto-pay-spec` is a real, independent repository now, but `spec/` here stays a plain vendored copy rather
-  than a git submodule; each SDK repo copies the wire contract and vectors it needs instead of sharing a
-  submodule checkout.
-- No version has been tagged and nothing has been published to npm yet; `package.json` is still
-  `0.0.0-dev.0`. `.github/workflows/release.yml` publishes with provenance on a `v*` tag once `NPM_TOKEN` is
-  configured as a repository secret under the `npm` environment.
+- `presto-pay-spec` remains an independent repository; this SDK keeps only the vectors and fixtures needed for
+  its own tests rather than using a submodule checkout.

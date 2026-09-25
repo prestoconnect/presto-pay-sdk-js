@@ -3,8 +3,7 @@
 [![CI](https://github.com/prestoconnect/presto-pay-sdk-js/actions/workflows/ci.yml/badge.svg)](https://github.com/prestoconnect/presto-pay-sdk-js/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-> **Pre-release.** Nothing has been published to npm yet — `npm install` below will 404 until the first tag.
-> `main` is pre-1.0 groundwork; see [CHANGELOG.md](CHANGELOG.md) for what's done and what's left before 0.1.0.
+Presto Pay SDK `0.1.0` is the first published release. See [CHANGELOG.md](CHANGELOG.md) for the release notes.
 
 Presto Pay SDK for JavaScript and TypeScript. It signs and verifies gateway requests using Web Crypto and has
 zero runtime dependencies.
