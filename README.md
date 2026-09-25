@@ -4,8 +4,12 @@ A JavaScript / TypeScript SDK for the Presto Pay gateway: `init`, `query`, `reve
 verification. Zero runtime dependencies, ESM only, built on the Web platform (`fetch`, `crypto.subtle`,
 `TextEncoder`/`TextDecoder`) so the same code runs on Node, Cloudflare Workers, and Vercel Edge.
 
-- **Runtimes (0.1.0):** Node 22.12+, Cloudflare Workers, Vercel Edge. Bun and Deno work but aren't in the support
-  statement yet.
+- **Runtimes (0.1.0):** Node 18.20+, 20, 22, 24, 26, Cloudflare Workers, Vercel Edge. Bun and Deno work but
+  aren't in the support statement yet.
+- **Node 18 caveat:** this package is ESM only. Node 22.12+ can `require()` an ESM package directly; on
+  Node 18.20–22.11, CommonJS callers need dynamic `import()` instead. Also, on Node 18 the global `crypto` is
+  exposed only on the main thread — a request handler running inside a `worker_threads` Worker or a forked
+  child process will see "Web Crypto is unavailable" there; run on the main thread, or move to Node 20+.
 - **Refused:** browsers. The `browser` export condition resolves to a module that throws — your merchant private
   key must never reach client-side code.
 
@@ -25,8 +29,8 @@ npm run demo
 
 Then open `http://localhost:3000/`. The demo covers hosted payment redirect, payment queries, reversals, refunds,
 and raw-body webhook verification. It uses the committed staging test credentials bundled under
-`sample/express-demo/keys/`; do not use them for production. To receive webhooks, expose the port through a public HTTPS tunnel and set `PUBLIC_URL` before
-starting the demo. See [`sample/express-demo/README.md`](sample/express-demo/README.md) for the full setup and route
+`sample/my-store/keys/`; do not use them for production. To receive webhooks, expose the port through a public HTTPS tunnel and set `PUBLIC_URL` before
+starting the demo. See [`sample/my-store/README.md`](sample/my-store/README.md) for the full setup and route
 reference.
 
 ## Quick start

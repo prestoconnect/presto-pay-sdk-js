@@ -9,6 +9,7 @@ export const port = Number(process.env.PORT ?? 3000);
 export const hasPublicUrl = Boolean(process.env.PUBLIC_URL?.trim());
 export const publicUrl = (process.env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/+$/, '');
 export const prestoMrn = process.env.PRESTO_MRN ?? 'PM181019QGJWH4K';
+export const defaultCurrency = 'MYR';
 
 export const prestoPayOptions = {
   environment: 'staging',
@@ -17,3 +18,13 @@ export const prestoPayOptions = {
   // Convert Node's Buffer to a plain Uint8Array for Web Crypto DER import.
   prestoPublicKey: new Uint8Array(readFileSync(path.join(keysDir, 'presto_ext_service_dev.der'))),
 };
+
+// Presto calls notifyUrl from its own servers -- localhost only works behind a public tunnel (see README).
+export function notifyUrl() {
+  return `${publicUrl}/presto/notify`;
+}
+
+export function returnUrlForTransaction(txnRefNum) {
+  if (!txnRefNum || !txnRefNum.trim()) throw new Error('txnRefNum is required to build the return URL');
+  return `${publicUrl}/return/${encodeURIComponent(txnRefNum.trim())}`;
+}
