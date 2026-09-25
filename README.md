@@ -1,5 +1,11 @@
 # @prestouniverse/presto-pay-sdk
 
+[![CI](https://github.com/prestoconnect/presto-pay-sdk-js/actions/workflows/ci.yml/badge.svg)](https://github.com/prestoconnect/presto-pay-sdk-js/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+> **Pre-release.** Nothing has been published to npm yet — `npm install` below will 404 until the first tag.
+> `main` is pre-1.0 groundwork; see [CHANGELOG.md](CHANGELOG.md) for what's done and what's left before 0.1.0.
+
 A JavaScript / TypeScript SDK for the Presto Pay gateway: `init`, `query`, `reverse`, `refund`, and webhook
 verification. Zero runtime dependencies, ESM only, built on the Web platform (`fetch`, `crypto.subtle`,
 `TextEncoder`/`TextDecoder`) so the same code runs on Node, Cloudflare Workers, and Vercel Edge.
@@ -19,19 +25,25 @@ verification. Zero runtime dependencies, ESM only, built on the Web platform (`f
 npm install @prestouniverse/presto-pay-sdk
 ```
 
-## Runnable Express demo
+## Runnable demo (MyStore)
 
-The repository includes a small Express application that exercises the real staging gateway through the SDK:
+The repository includes a small Express application, MyStore, that exercises the real staging gateway through
+the SDK:
 
 ```bash
 npm run demo
 ```
 
 Then open `http://localhost:3000/`. The demo covers hosted payment redirect, payment queries, reversals, refunds,
-and raw-body webhook verification. It uses the committed staging test credentials bundled under
-`sample/my-store/keys/`; do not use them for production. To receive webhooks, expose the port through a public HTTPS tunnel and set `PUBLIC_URL` before
-starting the demo. See [`sample/my-store/README.md`](sample/my-store/README.md) for the full setup and route
-reference.
+and raw-body webhook verification. To receive webhooks, expose the port through a public HTTPS tunnel and set
+`PUBLIC_URL` before starting the demo. See [`sample/my-store/README.md`](sample/my-store/README.md) for the full
+setup and route reference.
+
+**On the committed keys:** `sample/my-store/keys/` and `spec/keys/` intentionally commit a real (but
+**staging-only**) merchant private key for Presto's `11StreetMock` mock merchant, so the demo and test suite run
+with no setup. It cannot authorize a real payment and must never be reused for a live merchant — if a secret
+scanner flags it, that's expected, not a leak. See [`spec/keys/README.md`](spec/keys/README.md) for what each
+file is and why.
 
 ## Quick start
 
