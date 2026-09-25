@@ -9,6 +9,7 @@ export default defineConfig({
           environment: 'node',
           include: ['test/**/*.test.ts'],
           exclude: ['test/workers/**', 'test/edge/**', 'test/staging/**'],
+          setupFiles: ['./test/setup/node18-crypto-polyfill.ts'],
         },
       },
     ],

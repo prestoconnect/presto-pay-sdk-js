@@ -8,7 +8,7 @@ SDK's API and implementation, and how the two are tested. §3 is shared with the
 
 | # | Topic | Decision |
 |---|-------|----------|
-| 1 | Repository | `presto-pay-sdk-python`. The contract and vectors live in a separate `presto-pay-spec` repo, vendored here as a git submodule at `spec/` pinned to a commit. Four SDKs now implement §3, and a contract that lives inside one of them is a contract the other three fork (§9) |
+| 1 | Repository | `presto-pay-sdk-python`. The contract and vectors live in a separate `presto-pay-spec` repo, vendored here as a plain copy at `spec/` — not a git submodule — pinned to a commit. Four SDKs now implement §3, and a contract that lives inside one of them is a contract the other three fork (§9) |
 | 2 | Package | `presto-pay-sdk` on PyPI, imported as `presto_pay`. Pure-Python wheel plus sdist, no compiled extension |
 | 3 | Python | **3.11+** (3.11, 3.12, 3.13, 3.14 in CI). 3.11 is the floor for `StrEnum`, `Self` and `asyncio.timeout`, and by 0.1.0 every 3.10 deployment is on a security-only branch |
 | 4 | Dependencies | `cryptography` and `httpx`. The stdlib has no RSA at all, and `httpx` is the one mainstream client with a single API over sync and async. No pydantic: a payment SDK that drags a validation framework into a service that already has one is a version-conflict generator |
@@ -670,8 +670,9 @@ PEM. Each message names the input and the fix.
 ## 9. Wire contract and test vectors
 
 `presto-pay-spec` is a repository of its own holding `wire-contract.md` (the reviewed, language-neutral version
-of §3), `vectors/` and throwaway `keys/`. It is vendored into this repo as a submodule at `spec/`, pinned to a
-commit, and CI fails if the pin is behind the spec's default branch by more than a release.
+of §3), `vectors/` and throwaway `keys/`. It is vendored into this repo as a **plain copy** at `spec/`, not a git
+submodule, pinned to a commit; the copy is updated by hand when the pin moves, and CI fails if the pin is behind
+the spec's default branch by more than a release.
 
 Four SDKs is what forces this. With the vectors living in the JavaScript repo, the other three either copy them —
 and drift — or depend on a JavaScript package to run their tests. A separate repo also makes the rule that
@@ -701,7 +702,7 @@ src/presto_pay/
   payments/            inputs, to_wire, results
   webhooks/            verifier, NotifyAck, events
   py.typed
-spec/                  submodule: presto-pay-spec
+spec/                  vendored copy of presto-pay-spec, not a submodule
 tests/                 vectors, unit, sockets, parity, staging
 ```
 
@@ -733,7 +734,7 @@ have had their first contact with staging.
 
 | # | Milestone | Exit criteria |
 |---|-----------|---------------|
-| 0 | Spec | `presto-pay-spec` submoduled at its tagged commit |
+| 0 | Spec | `presto-pay-spec` vendored (plain copy, not a submodule) at its tagged commit |
 | 1 | Scaffold | Repo, `pyproject.toml` with hatchling, pytest + mypy strict + ruff, CI on 3.11–3.14 |
 | 2 | Wire core | Canonicalization, timestamps, sign and verify, PEM / DER / PKCS#12 import; those vectors pass |
 | 3 | Sans-IO protocol | `PreparedRequest` / response interpretation, exception hierarchy, `may_have_taken_effect` and `reconcile_by` per operation — all with no IO |

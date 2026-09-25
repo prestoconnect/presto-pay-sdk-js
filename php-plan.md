@@ -8,7 +8,7 @@ SDK's API and implementation, and how the two are tested. §3 is shared with the
 
 | # | Topic | Decision |
 |---|-------|----------|
-| 1 | Repository | `presto-pay-sdk-php`. The contract and vectors live in a separate `presto-pay-spec` repo, vendored here as a git submodule at `spec/` pinned to a commit. Four SDKs now implement §3, and a contract that lives inside one of them is a contract the other three fork (§9) |
+| 1 | Repository | `presto-pay-sdk-php`. The contract and vectors live in a separate `presto-pay-spec` repo, vendored here as a plain copy at `spec/` — not a git submodule — pinned to a commit. Four SDKs now implement §3, and a contract that lives inside one of them is a contract the other three fork (§9) |
 | 2 | Package | `prestouniverse/presto-pay-sdk` on Packagist, namespace `PrestoUniverse\PrestoPay` |
 | 3 | PHP | **8.2+** (8.2, 8.3, 8.4, 8.5 in CI), 64-bit only. `readonly` classes, enums and named arguments are the whole API style, and a 32-bit `PHP_INT_SIZE` cannot hold the amounts safely, so the constructor refuses it with a clear message rather than truncating money |
 | 4 | Extensions | `ext-json`, `ext-openssl`. Both ship with every mainstream PHP build; neither has a pure-PHP substitute worth writing |
@@ -709,8 +709,9 @@ fix.
 ## 9. Wire contract and test vectors
 
 `presto-pay-spec` is a repository of its own holding `wire-contract.md` (the reviewed, language-neutral version
-of §3), `vectors/` and throwaway `keys/`. It is vendored here as a submodule at `spec/`, pinned to a commit, and
-CI fails if the pin is behind the spec's default branch by more than a release.
+of §3), `vectors/` and throwaway `keys/`. It is vendored here as a **plain copy** at `spec/`, not a git submodule,
+pinned to a commit; the copy is updated by hand when the pin moves, and CI fails if the pin is behind the spec's
+default branch by more than a release.
 
 Four SDKs is what forces this. With the vectors living in the JavaScript repo, the other three either copy them —
 and drift — or depend on a JavaScript package to run their tests. A separate repo also makes the rule that
@@ -742,7 +743,7 @@ src/
   Exception/               PrestoPayException and the five subclasses
   Internal/                Canonicalizer, Signer, Verifier, Timestamp, Mapper, CurlHttpClient, Retry
   Constant/                PaymentStatus, PaymentMethod, ErrorCode, ...
-spec/                      submodule: presto-pay-spec
+spec/                      vendored copy of presto-pay-spec, not a submodule
 tests/                     Vector, Unit, Socket, Staging
 ```
 
@@ -774,7 +775,7 @@ have had their first contact with staging.
 
 | # | Milestone | Exit criteria |
 |---|-----------|---------------|
-| 0 | Spec | `presto-pay-spec` submoduled at its tagged commit |
+| 0 | Spec | `presto-pay-spec` vendored (plain copy, not a submodule) at its tagged commit |
 | 1 | Scaffold | Repo, `composer.json`, PHPUnit + PHPStan max + CS-Fixer, CI on 8.2–8.5 |
 | 2 | Wire core | Canonicalization with the §5 hazards covered, timestamps, sign and verify, PEM / DER loading; those vectors pass. **Decides PKCS#12**: `openssl_pkcs12_read` is tried against the real RC2 keystore on every supported PHP version, and decision 6 is confirmed or downgraded to PEM-only (§8) |
 | 3 | Send path | Exception hierarchy, `mayHaveTakenEffect()` and `reconcileBy()` per operation, whole-call deadline, jittered `retryReads`, bundled cURL client with cURL-code classification proven by the socket suite |

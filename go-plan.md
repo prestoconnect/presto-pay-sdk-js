@@ -8,7 +8,7 @@ SDK's API and implementation, and how the two are tested. §3 is shared with the
 
 | # | Topic | Decision |
 |---|-------|----------|
-| 1 | Repository | `github.com/prestouniverse/presto-pay-sdk-go`. The contract and vectors live in a separate `presto-pay-spec` repo, vendored here as a git submodule at `spec/` pinned to a commit. Four SDKs now implement §3, and a contract that lives inside one of them is a contract the other three fork (§9) |
+| 1 | Repository | `github.com/prestouniverse/presto-pay-sdk-go`. The contract and vectors live in a separate `presto-pay-spec` repo, vendored here as a plain copy at `spec/` — not a git submodule — pinned to a commit. Four SDKs now implement §3, and a contract that lives inside one of them is a contract the other three fork (§9) |
 | 2 | Module and package | Module path above, package `prestopay`, imported as `prestopay.New(...)`. Pre-1.0 as `v0.x`, so the API can still move; `v1.0.0` is a promise, not a version number |
 | 3 | Go | **1.24+** (1.24, 1.25, 1.26 in CI). No build tags, no cgo, one build for every GOOS |
 | 4 | Dependencies | **None.** `crypto/rsa`, `crypto/x509`, `encoding/pem`, `encoding/json`, `net/http` and `net/http/httptrace` cover every requirement, and a payment SDK in someone's `go.mod` should not bring a dependency tree with it |
@@ -688,8 +688,9 @@ the fix.
 ## 9. Wire contract and test vectors
 
 `presto-pay-spec` is a repository of its own holding `wire-contract.md` (the reviewed, language-neutral version
-of §3), `vectors/` and throwaway `keys/`. It is vendored here as a submodule at `spec/`, pinned to a commit, and
-CI fails if the pin is behind the spec's default branch by more than a release.
+of §3), `vectors/` and throwaway `keys/`. It is vendored here as a **plain copy** at `spec/`, not a git submodule,
+pinned to a commit; the copy is updated by hand when the pin moves, and CI fails if the pin is behind the spec's
+default branch by more than a release.
 
 Four SDKs is what forces this. With the vectors living in the JavaScript repo, the other three either copy them —
 and drift — or depend on a JavaScript package to run their tests. A separate repo also makes the rule that
@@ -706,9 +707,8 @@ implementation bug cannot leak into its own tests, in any language.
 | `webhooks.json` | body, merchant IDs, `now` → event fields, or error type. Includes a redelivery: same `eventRefNum`, later `ts`, both accepted under the 15-minute window |
 
 Vector field names are the **wire** names; the Go harness maps them to exported field names, which is itself a
-small test of the §1 decision 8 mapping. Tests read the files from disk rather than `go:embed`, so a missing
-submodule fails with "spec/vectors not found, run git submodule update --init" instead of a build error nobody
-can parse.
+small test of the §1 decision 8 mapping. Tests read the files from disk rather than `go:embed`, so a missing or
+stale vendored copy fails with "spec/vectors not found" instead of a build error nobody can parse.
 
 ## 10. Repository layout
 
@@ -720,7 +720,7 @@ prestopay/
   errors.go  constants.go  timestamp.go  version.go
   internal/
     canonical/  crypto/  keys/  transport/
-spec/              submodule: presto-pay-spec
+spec/              vendored copy of presto-pay-spec, not a submodule
 examples/          net/http, chi, Lambda
 ```
 
@@ -750,7 +750,7 @@ have had their first contact with staging.
 
 | # | Milestone | Exit criteria |
 |---|-----------|---------------|
-| 0 | Spec | `presto-pay-spec` submoduled at its tagged commit |
+| 0 | Spec | `presto-pay-spec` vendored (plain copy, not a submodule) at its tagged commit |
 | 1 | Scaffold | Module, CI on 1.24–1.26 with race, vet, lint and vulncheck |
 | 2 | Wire core | Canonicalization, timestamps, sign and verify, PEM and certificate loading; those vectors pass |
 | 3 | Send path | Error types with `Unwrap`, `MayHaveTakenEffect` and `ReconcileBy` per operation, whole-call deadline, jittered `RetryReads`, `httptrace` classification proven by the socket suite |
