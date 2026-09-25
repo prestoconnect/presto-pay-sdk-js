@@ -46,7 +46,7 @@ Everything below is pre-1.0 groundwork; nothing has been published to npm yet.
 ### Known gaps before 0.1.0
 
 - PKCS#12 private-key import, encrypted PEM on Node, and a Bun/Deno support statement are explicitly deferred
-  (js-plan.md §12, "later").
+  to a later milestone.
 - `presto-pay-spec` is a real, independent repository now, but `spec/` here stays a plain vendored copy rather
   than a git submodule; each SDK repo copies the wire contract and vectors it needs instead of sharing a
   submodule checkout.
