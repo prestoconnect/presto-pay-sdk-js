@@ -1,5 +1,5 @@
 {
-  "name": "presto-pay-sdk-express-demo",
+  "name": "presto-pay-sdk-my-store-demo",
   "private": true,
   "version": "0.0.0",
   "description": "Runnable demo of @prestouniverse/presto-pay-sdk against Presto's real staging gateway",

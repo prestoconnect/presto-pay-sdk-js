@@ -1,0 +1,24 @@
+<div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <table class="w-full text-xs">
+    <thead>
+    <tr class="bg-slate-50 text-slate-500">
+      <th class="px-3 py-2 text-left font-medium">Time</th>
+      <th class="px-3 py-2 text-left font-medium">Event</th>
+      <th class="px-3 py-2 text-left font-medium">Status</th>
+      <th class="px-3 py-2 text-left font-medium">Txn ref</th>
+      <th class="px-3 py-2 text-left font-medium">success</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% recentWebhooks.forEach((w) => { %>
+      <tr class="border-t border-slate-200">
+        <td class="px-3 py-2"><%= w.receivedAt.toTimeString().slice(0, 8) %></td>
+        <td class="px-3 py-2"><%= w.eventCode %></td>
+        <td class="px-3 py-2"><%= w.paymentStatus %></td>
+        <td class="px-3 py-2"><%= w.txnRefNum %></td>
+        <td class="px-3 py-2<%= w.eventCode === 'Authorised' ? ' font-semibold text-green-600' : '' %>"><%= w.success %></td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table>
+</div>
