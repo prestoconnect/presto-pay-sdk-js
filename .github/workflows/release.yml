@@ -1,0 +1,43 @@
+name: Release
+
+# Push a tag like v0.1.0 whose version matches package.json. Requires a repository secret:
+#   NPM_TOKEN - an npm automation token with publish rights for @prestouniverse
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check tag matches package.json version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${version}" >&2
+            exit 1
+          fi
+          case "${version}" in *-dev.*) echo "Refusing to release a dev version (${version})" >&2; exit 1;; esac
+
+      - name: Verify (typecheck, tests, package checks)
+        run: npm run check
+
+      - name: Publish with provenance
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

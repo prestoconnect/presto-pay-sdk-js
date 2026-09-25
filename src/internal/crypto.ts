@@ -17,7 +17,9 @@ function subtle(): SubtleCrypto {
   const available = globalThis.crypto?.subtle;
   if (!available) {
     throw new PrestoPayConfigError(
-      'Web Crypto is unavailable. On Node this needs 22.12 or newer; in a browser it needs a secure context',
+      'Web Crypto is unavailable. On Node this needs 18.20 or newer, and the request handler must run on the ' +
+        "main thread — Node 18's global Web Crypto is not exposed inside worker_threads or forked child " +
+        'processes; in a browser it needs a secure context',
       { operation: 'config' },
     );
   }
