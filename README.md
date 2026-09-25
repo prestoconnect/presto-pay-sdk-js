@@ -39,11 +39,9 @@ and raw-body webhook verification. To receive webhooks, expose the port through 
 `PUBLIC_URL` before starting the demo. See [`sample/my-store/README.md`](sample/my-store/README.md) for the full
 setup and route reference.
 
-**On the committed keys:** `sample/my-store/keys/` and `spec/keys/` intentionally commit a real (but
-**staging-only**) merchant private key for Presto's `11StreetMock` mock merchant, so the demo and test suite run
-with no setup. It cannot authorize a real payment and must never be reused for a live merchant — if a secret
-scanner flags it, that's expected, not a leak. See [`spec/keys/README.md`](spec/keys/README.md) for what each
-file is and why.
+**Credentials are never committed:** the demo and opt-in staging smoke test require merchant key files and
+identifiers supplied through environment variables. The remaining files under `spec/keys/` are generated test
+fixtures only. See [`spec/keys/README.md`](spec/keys/README.md) for the setup.
 
 ## Quick start
 
@@ -354,7 +352,7 @@ npm run check         # typecheck + all of the above + publint/attw/export-condi
 
 `npm run test:staging` hits Presto's real staging gateway and is skipped unless you set
 `PRESTOPAY_STAGING_SMOKE=1` — it's a live third-party network call, so it never runs as a side effect of `npm
-test` or CI-by-default. See `spec/keys/README.md` for the staging credentials it uses.
+test` or CI-by-default. Provide staging credentials through environment variables or file paths before opting in.
 
 ## License
 

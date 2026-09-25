@@ -18,8 +18,8 @@ Everything below is pre-1.0 groundwork; nothing has been published to npm yet.
 - Webhook verification (`createWebhookVerifier`, `presto.webhooks.verify`), `NotifyAck`, and `fromEnv`.
 - `1005` business errors now report the observed clock offset between the request and response timestamps
   (`PrestoPayApiError.clockOffsetMs`).
-- `spec/` vendored locally (wire-contract.md, vectors, throwaway test keys, and the real Presto staging
-  certificate) as a plain copy of `presto-pay-spec`, not a git submodule.
+- `spec/` vendored locally (wire-contract.md, vectors, and throwaway test keys) as a plain copy of
+  `presto-pay-spec`, not a git submodule. Real Presto staging credentials are supplied externally.
 - Test infrastructure: vector-driven and unit tests on Node, a workerd smoke suite via
   `@cloudflare/vitest-pool-workers`, a custom `@edge-runtime/vm`-backed environment for the edge-runtime leg
   (no maintained `vitest-environment-edge-runtime` package exists on npm), package hygiene checks (`publint`,

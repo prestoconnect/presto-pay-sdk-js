@@ -1,22 +1,27 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const here = path.dirname(fileURLToPath(import.meta.url));
-const keysDir = path.resolve(here, '../keys');
+function required(name) {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is required; see sample/my-store/.env.example`);
+  return value;
+}
 
 export const port = Number(process.env.PORT ?? 3000);
 export const hasPublicUrl = Boolean(process.env.PUBLIC_URL?.trim());
 export const publicUrl = (process.env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/+$/, '');
-export const prestoMrn = process.env.PRESTO_MRN ?? 'PM181019QGJWH4K';
+export const prestoMrn = required('PRESTO_MRN');
 export const defaultCurrency = 'MYR';
+
+const privateKeyFile = path.resolve(required('PRESTOPAY_PRIVATE_KEY_FILE'));
+const publicKeyFile = path.resolve(required('PRESTOPAY_PUBLIC_KEY_FILE'));
 
 export const prestoPayOptions = {
   environment: 'staging',
-  merchantId: process.env.PRESTOPAY_MID ?? '11StreetMock',
-  privateKey: readFileSync(path.join(keysDir, 'presto_rm_key-pkcs8.pem'), 'utf8'),
+  merchantId: required('PRESTOPAY_MID'),
+  privateKey: readFileSync(privateKeyFile, 'utf8'),
   // Convert Node's Buffer to a plain Uint8Array for Web Crypto DER import.
-  prestoPublicKey: new Uint8Array(readFileSync(path.join(keysDir, 'presto_ext_service_dev.der'))),
+  prestoPublicKey: new Uint8Array(readFileSync(publicKeyFile)),
 };
 
 // Presto calls notifyUrl from its own servers -- localhost only works behind a public tunnel (see README).

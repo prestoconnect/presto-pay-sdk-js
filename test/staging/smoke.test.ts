@@ -17,8 +17,21 @@ import { TxnType } from '../../src/payments/constants.js';
 const enabled = process.env.PRESTOPAY_STAGING_SMOKE === '1';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const specDir = path.resolve(here, '../../spec');
 const candidatesDir = path.resolve(here, 'candidate-vectors');
+
+function required(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`${name} is required when PRESTOPAY_STAGING_SMOKE=1`);
+  return value;
+}
+
+function readRequiredTextFile(name: string): string {
+  return readFileSync(required(name), 'utf8');
+}
+
+function readRequiredBinaryFile(name: string): Uint8Array {
+  return new Uint8Array(readFileSync(required(name)));
+}
 
 function saveCandidate(name: string, data: unknown): void {
   if (!existsSync(candidatesDir)) mkdirSync(candidatesDir, { recursive: true });
@@ -26,14 +39,16 @@ function saveCandidate(name: string, data: unknown): void {
 }
 
 describe.skipIf(!enabled)('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
-  const privateKey = readFileSync(path.join(specDir, 'keys/presto_rm_key-pkcs8.pem'), 'utf8');
-  const prestoPublicKey = readFileSync(path.join(specDir, 'keys/presto_ext_service_dev.der'));
+  const merchantId = required('PRESTOPAY_MID');
+  const prestoMrn = required('PRESTO_MRN');
+  const privateKey = process.env.PRESTOPAY_PRIVATE_KEY ?? readRequiredTextFile('PRESTOPAY_PRIVATE_KEY_FILE');
+  const prestoPublicKey = process.env.PRESTOPAY_PUBLIC_KEY ?? readRequiredBinaryFile('PRESTOPAY_PUBLIC_KEY_FILE');
 
   const client = createPrestoPay({
     environment: 'staging',
-    merchantId: '11StreetMock',
+    merchantId,
     privateKey,
-    prestoPublicKey: new Uint8Array(prestoPublicKey),
+    prestoPublicKey,
     strict: true, // reports [U]-rule drift as a failure instead of silently coercing it (§4, §11)
   });
 
@@ -42,7 +57,7 @@ describe.skipIf(!enabled)('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
     let initResult;
     try {
       initResult = await client.payments.init({
-        prestoMrn: 'PM181019QGJWH4K',
+        prestoMrn,
         txnType: TxnType.QrPay,
         txnRefNum,
         displayDesc: 'presto-pay-sdk-js staging smoke test',
@@ -61,7 +76,7 @@ describe.skipIf(!enabled)('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
     expect(initResult.paymentStatus).toBeTruthy();
 
     const queryResult = await client.payments.query({
-      prestoMrn: 'PM181019QGJWH4K',
+      prestoMrn,
       paymentRefNum: initResult.paymentRefNum,
     });
     saveCandidate('query-success', queryResult);
@@ -71,13 +86,13 @@ describe.skipIf(!enabled)('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
   it('reports a clear clock-skew message on a deliberately stale request', async () => {
     const staleClient = createPrestoPay({
       environment: 'staging',
-      merchantId: '11StreetMock',
+      merchantId,
       privateKey,
-      prestoPublicKey: new Uint8Array(prestoPublicKey),
+      prestoPublicKey,
       now: () => Date.now() - 20 * 60_000, // outside the 15-minute validity window (§3.3)
     });
     const promise = staleClient.payments.query({
-      prestoMrn: 'PM181019QGJWH4K',
+      prestoMrn,
       txnRefNum: 'does-not-matter',
     });
     await promise.catch((err) => {
