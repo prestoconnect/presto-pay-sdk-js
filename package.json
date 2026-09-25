@@ -2,7 +2,7 @@
   "name": "@prestouniverse/presto-pay-sdk",
   "version": "0.0.0-dev.0",
   "description": "Presto Pay SDK for JavaScript and TypeScript",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
   "engines": {

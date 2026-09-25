@@ -346,4 +346,4 @@ test` or CI-by-default. See `spec/keys/README.md` for the staging credentials it
 
 ## License
 
-MIT
+Apache-2.0
