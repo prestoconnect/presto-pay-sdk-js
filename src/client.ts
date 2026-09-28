@@ -242,7 +242,9 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
     if (body.success === false) {
       const errorCode = typeof body.errorCode === 'string' ? body.errorCode : '';
       const errorMessage = typeof body.errorMessage === 'string' ? body.errorMessage : '';
-      // §3.9: a duplicate txnRefNum on init proves a payment record exists, possibly an authorised one.
+      // If the gateway ever returns 1203 on init, treat it as uncertain rather than a definite rejection: a
+      // payment record may already exist, possibly an authorised one, so the caller should reconcile by
+      // txnRefNum instead of assuming the init failed outright.
       const isDuplicateInit = operation === 'init' && errorCode === '1203';
       const attachCanonical = errorCode === '1006' || errorCode === '1007';
       // §3.3: a skewed host clock fails every request with 1005 and has no other way to find out why, so the

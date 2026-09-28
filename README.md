@@ -103,12 +103,16 @@ secret store over raw environment strings when possible.
 
 ## Retries and idempotency
 
-`payments.init`, `payments.reverse`, and `payments.refund` are **not** safely retried after the request may have
-reached Presto. The default retry policy (`retryReads` / `DEFAULT_RETRY_READS`) only covers `payments.query`;
+`payments.init`, `payments.reverse`, and `payments.refund` are **not** automatically retried after the request may
+have reached Presto. The default retry policy (`retryReads` / `DEFAULT_RETRY_READS`) only covers `payments.query`;
 these three operations are only retried automatically when `PrestoPayTransportError.requestNotSent` is `true`.
+(`init` is idempotent by `txnRefNum` if you do retry it manually — see below — but `reverse` and `refund` have no
+such confirmed idempotency, so avoid resending those blind.)
 
-If `init` times out or fails ambiguously **after** send, **do not** call `init` again with the same `txnRefNum`
-(duplicate refs return error `1203`). Reconcile with:
+If `init` times out or fails ambiguously **after** send, `init` is idempotent by `txnRefNum`: calling it again with
+the same `txnRefNum` does not create a second payment record or fail — Presto returns the existing payment's
+current status under the same `paymentRefNum`. That makes a retry safe, but it still means guessing based on a
+client-side timeout; prefer reconciling explicitly with:
 
 ```ts
 const status = await presto.payments.query({

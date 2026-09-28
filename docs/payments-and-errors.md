@@ -41,8 +41,9 @@ try {
 ```
 
 `mayHaveTakenEffect` is set for an uncertain transport failure, a 5xx on a state-changing call, a post-200 parsing or
-verification failure, and duplicate `init` business error `1203`. A normal 4xx or ordinary business rejection is safe
-to handle as a rejection. `mayHaveSucceeded(error)` is a convenience guard when the caught value is `unknown`.
+verification failure, and — if the gateway ever returns it — `init` business error `1203`. A normal 4xx or ordinary
+business rejection is safe to handle as a rejection. `mayHaveSucceeded(error)` is a convenience guard when the caught
+value is `unknown`.
 
 ## Error classification
 
