@@ -45,7 +45,7 @@ bundled staging credentials.
 ## Quick start
 
 ```ts
-import { createPrestoPay, PaymentMethod, TxnType } from '@prestouniverse/presto-pay-sdk';
+import { createPrestoPay, TxnType } from '@prestouniverse/presto-pay-sdk';
 
 const presto = createPrestoPay({
   environment: 'staging', // change only after production validation
@@ -62,8 +62,7 @@ const payment = await presto.payments.init({
   amount: 10_000, // minor units; MYR 100.00
   currencyCode: 'MYR',
   notifyUrl: 'https://merchant.example/presto/notify',
-  redirectUrl: 'https://merchant.example/presto/return',
-  allowedPaymentMethods: [PaymentMethod.Wallet],
+  redirectUrl: 'https://merchant.example/presto/return/order-123',
 });
 
 // Redirect the shopper to the hosted payment page.
