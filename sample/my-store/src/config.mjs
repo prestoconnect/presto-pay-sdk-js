@@ -24,7 +24,7 @@ export const prestoPayOptions = {
   prestoPublicKey: new Uint8Array(readFileSync(publicKeyFile)),
 };
 
-// Presto calls notifyUrl from its own servers -- localhost only works behind a public tunnel (see README).
+// Presto calls notifyUrl from its own servers -- localhost only works behind a public tunnel.
 export function notifyUrl() {
   return `${publicUrl}/presto/notify`;
 }

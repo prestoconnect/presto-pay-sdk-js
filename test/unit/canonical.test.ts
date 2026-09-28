@@ -5,7 +5,7 @@ import { PrestoPayConfigError, PrestoPayResponseError } from '../../src/errors.j
 describe('assertEncodable', () => {
   it('accepts ordinary strings and valid surrogate pairs', () => {
     expect(() => assertEncodable('hello', 'displayDesc', 'init')).not.toThrow();
-    expect(() => assertEncodable('😀', 'displayDesc', 'init')).not.toThrow(); // 😀
+    expect(() => assertEncodable('😀', 'displayDesc', 'init')).not.toThrow();
   });
 
   it('rejects a lone high surrogate', () => {

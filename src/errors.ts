@@ -138,7 +138,7 @@ const REDACTED = '[redacted: set redactErrorBodies: false to see it]';
 
 /**
  * Bodies and canonical strings can carry `cardBin`, `cardSummary`, `receiptEmail` and `receiptName`, and whole
- * error objects get logged. Redaction is the default; §4 requires the README to say so either way.
+ * error objects get logged, so redaction is the default.
  */
 export function redact(text: string | undefined, redactErrorBodies: boolean): string | undefined {
   if (text === undefined) return undefined;

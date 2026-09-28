@@ -88,10 +88,9 @@ export function createWebhookVerifier(options: WebhookVerifierOptions): WebhookV
     async verify(input: Request | string | Uint8Array): Promise<WebhookEvent> {
       const text = await readRawBody(input);
 
-      // Step 1: parse the raw body.
       const body = parseSignedBody(text, { operation: 'webhook', source: 'webhook', rawBody: text });
 
-      // Step 2: signature — before mid and freshness, since a forged body fails here regardless.
+      // Signature is checked before mid and freshness, since a forged body fails here regardless.
       const canonical = canonicalize(body);
       const signature = typeof body.signature === 'string' ? body.signature : '';
       const validSignature = signature.length > 0 && (await verifyAgainstAnyKey(canonical, signature));
@@ -103,7 +102,7 @@ export function createWebhookVerifier(options: WebhookVerifierOptions): WebhookV
         });
       }
 
-      // Step 3: map fields. `success` is always present, on webhooks as on responses (§13 round 1, answer 5).
+      // `success` is always present, on webhooks as on responses.
       if (typeof body.success !== 'boolean') {
         throw new PrestoPayResponseError('webhook body is missing the "success" field', {
           operation: 'webhook',
@@ -129,7 +128,7 @@ export function createWebhookVerifier(options: WebhookVerifierOptions): WebhookV
       );
       const success = body.success;
 
-      // Step 4: mid must be one of the configured merchant IDs — mandatory, since one key signs for everyone.
+      // mid must be one of the configured merchant IDs — mandatory, since one key signs for everyone.
       if (!merchantIds.has(mid)) {
         throw new PrestoPaySignatureError(`webhook mid "${mid}" is not one of the configured merchant IDs`, {
           operation: 'webhook',
@@ -138,7 +137,7 @@ export function createWebhookVerifier(options: WebhookVerifierOptions): WebhookV
         });
       }
 
-      // Step 5: freshness. A malformed ts is a malformed body, not a signature failure.
+      // A malformed ts is a malformed body, not a signature failure.
       let tsInstantMs: number;
       try {
         tsInstantMs = parseGatewayTimestamp(ts).getTime();

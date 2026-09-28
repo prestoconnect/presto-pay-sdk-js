@@ -131,7 +131,6 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
   const redactErrorBodies = options.redactErrorBodies ?? true;
   const now = options.now ?? (() => Date.now());
 
-  // PEM/certificate structure is checked synchronously here; the (expensive) Web Crypto import is lazy below.
   privateKeyDer(options.privateKey, 'privateKey');
   const publicKeyInputs = Array.isArray(options.prestoPublicKey)
     ? options.prestoPublicKey
@@ -186,7 +185,6 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
     const { operation, resendSafe, reconcileBy } = spec;
     const rawBody = redact(result.bodyText, redactErrorBodies) ?? result.bodyText;
 
-    // Step 1: HTTP status.
     if (result.status !== 200) {
       const mayHaveTakenEffect = !resendSafe && result.status >= 500;
       throw new PrestoPayApiError(`gateway responded with HTTP ${result.status}`, {
@@ -199,8 +197,8 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       });
     }
 
-    // Step 2: parse.
-    const indeterminate = !resendSafe; // any failure from here on happened after an authentic 200.
+    // any failure from here on happened after an authentic 200.
+    const indeterminate = !resendSafe;
     let body: JsonObject;
     try {
       body = parseSignedBody(result.bodyText, { operation, source: 'response', rawBody: result.bodyText });
@@ -218,7 +216,7 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       );
     }
 
-    // Step 3: signature. Comes before `success` — business errors are signed too.
+    // Verified before checking `success` — business errors are signed too.
     const canonical = canonicalize(body);
     const signature = typeof body.signature === 'string' ? body.signature : '';
     const verified = signature.length > 0 && (await verifyAgainstAnyKey(canonical, signature));
@@ -232,7 +230,6 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       });
     }
 
-    // Step 4: success.
     if (typeof body.success !== 'boolean') {
       throw new PrestoPayResponseError('response is missing the "success" field', {
         operation,
@@ -277,7 +274,6 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
       });
     }
 
-    // Step 5: map fields.
     const mapCtx: MapContext = {
       operation,
       rawBody,
@@ -286,7 +282,6 @@ export function createPrestoPay(options: PrestoPayOptions): PrestoPayClient {
     };
     const mapped = spec.mapResponse(body, mapCtx);
 
-    // Step 6: echo check.
     if (typeof body.prestoMrn === 'string' && body.prestoMrn !== spec.expectedPrestoMrn) {
       throw new PrestoPayResponseError(
         `prestoMrn echoed back ("${body.prestoMrn}") does not match what was signed into the request ("${spec.expectedPrestoMrn}")`,
