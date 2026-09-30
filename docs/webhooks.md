@@ -50,8 +50,12 @@ async function handleOnce(eventRefNum: string, event: WebhookEvent) {
 ```
 
 Return HTTP 200 with `NotifyAck.ok` (or `okResponse()`) after accepting the event. Return `NotifyAck.resend` only for
-your own transient failure, such as an unavailable database. `NotifyAck.forError` maps permanent signature or malformed
-body failures to `resend: false`; retrying those failures cannot repair the request.
+your own transient failure, such as an unavailable database. `NotifyAck.forError` maps a webhook that failed
+verification (a signature or malformed-body error whose `source` is `'webhook'`) to `resend: false`; retrying those
+failures cannot repair the request. The same error types from a call inside the handler, such as a failed `query`,
+have `source: 'response'` and map to `resend: true`, so the event is delivered again.
 
-`query` remains the authoritative source of payment state. See the [payment reconciliation guide](payments-and-errors.md)
+A webhook says what happened (`eventCode`, `success`), not the payment's resulting status, and the event carries no
+status. Call `query` for it, and mark `eventRefNum` as seen only after that succeeds, so a redelivery after a failed
+query is not mistaken for a duplicate. See the [payment reconciliation guide](payments-and-errors.md)
 and the [MyStore webhook route](../sample/my-store/README.md).

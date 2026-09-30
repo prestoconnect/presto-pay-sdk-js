@@ -1,5 +1,5 @@
 import type { PaymentDetail } from '../payments/types.js';
-import type { EventCode, PaymentStatus } from '../payments/constants.js';
+import type { EventCode } from '../payments/constants.js';
 
 /** A verified webhook event. Wire field names, as with the payment responses. */
 export interface WebhookEvent {
@@ -19,9 +19,4 @@ export interface WebhookEvent {
   readonly userRefNum?: string;
   readonly additionalData?: string;
   readonly paymentDetails: readonly PaymentDetail[];
-  /**
-   * Derived, not on the wire (§3.7): for `Authorised`, `success` decides `Authorised` / `Failed`; for every
-   * other event code, the event code itself is the status. `query` remains the authoritative source of truth.
-   */
-  readonly paymentStatus: PaymentStatus;
 }

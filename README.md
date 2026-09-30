@@ -137,8 +137,13 @@ const verifier = createWebhookVerifier({
 });
 
 const event = await verifier.verify(rawRequestBody); // string, Uint8Array, or unread Request
-console.log(event.paymentStatus); // Authorised maps to success; others pass through
+const payment = await presto.payments.query({ prestoMrn: event.prestoMrn, paymentRefNum: event.paymentRefNum });
+console.log(event.eventCode, event.success, payment.paymentStatus);
 ```
+
+A webhook says what happened (`eventCode`, and `success` for whether it worked), not the payment's resulting
+status — a failed `Refunded`, for example, leaves the payment as it was — so the event carries no status. Query
+the payment for it. If that query fails, `NotifyAck.forError` answers `resend`, so Presto delivers the event again.
 
 Presto signs webhooks for every partner with the same key, so `merchantId` must be checked — without it, a
 genuine event for another merchant would still verify. Signature is checked before `mid` and freshness, since a

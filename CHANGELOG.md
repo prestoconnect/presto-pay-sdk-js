@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+### Changed
+
+- **Breaking:** `WebhookEvent.paymentStatus` is removed. A webhook reports what happened (`eventCode`, `success`),
+  not the payment's resulting status, and deriving one was guesswork: a `Refunded` or `Reversed` event with
+  `success: false` is a refund or reversal that failed, leaving the payment in its previous status, which the event
+  does not carry. Call `payments.query` for the current status. This follows the shared wire contract.
+- The MyStore sample queries the payment in its webhook route and lists the returned status, marking
+  `eventRefNum` as seen only after the query succeeds.
+
+### Fixed
+
+- `NotifyAck.forError` answered `ok` for any `PrestoPaySignatureError` or `PrestoPayResponseError`, including ones
+  from a `query` made inside the webhook handler, which told Presto to stop redelivering an event the handler never
+  processed. It now answers `ok` only for errors whose `source` is `'webhook'`.
+
 ## 0.1.0 - 2026-09-25
 
 First published release.

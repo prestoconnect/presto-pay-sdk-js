@@ -7,7 +7,6 @@ import { PrestoPayConfigError, PrestoPayResponseError, PrestoPaySignatureError }
 import { canonicalize, parseSignedBody } from '../internal/canonical.js';
 import { importPublicKey, verify as verifySignature } from '../internal/crypto.js';
 import { formatGatewayTimestamp, parseGatewayTimestamp } from '../internal/timestamp.js';
-import { EventCode, PaymentStatus } from '../payments/constants.js';
 import {
   mapPaymentDetail,
   optionalString,
@@ -159,9 +158,6 @@ export function createWebhookVerifier(options: WebhookVerifierOptions): WebhookV
         );
       }
 
-      const paymentStatus =
-        eventCode === EventCode.Authorised ? (success ? PaymentStatus.Authorised : PaymentStatus.Failed) : eventCode;
-
       const event: Record<string, unknown> = {
         eventCode,
         mid,
@@ -175,7 +171,6 @@ export function createWebhookVerifier(options: WebhookVerifierOptions): WebhookV
         ts,
         success,
         paymentDetails,
-        paymentStatus,
       };
       if (userRefNum !== undefined) event.userRefNum = userRefNum;
       if (additionalData !== undefined) event.additionalData = additionalData;

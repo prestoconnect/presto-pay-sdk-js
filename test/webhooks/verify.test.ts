@@ -54,26 +54,24 @@ describe('createWebhookVerifier', () => {
     );
   });
 
-  it('verifies a well-formed, well-signed event and derives paymentStatus', async () => {
+  it('verifies a well-formed, well-signed event', async () => {
     const text = await signedWebhook();
     const event = await verifier().verify(text);
     expect(event.mid).toBe('MID1');
     expect(event.eventRefNum).toBe('EVT1');
-    expect(event.paymentStatus).toBe('Authorised'); // Authorised + success:true
     expect(event.paymentDetails).toEqual([]);
   });
 
-  it('derives Failed for an Authorised event with success:false', async () => {
-    const text = await signedWebhook({ success: false });
-    const event = await verifier().verify(text);
-    expect(event.paymentStatus).toBe('Failed');
-  });
-
-  it('uses the event code itself as the status for non-Authorised events', async () => {
-    const text = await signedWebhook({ eventCode: 'Refunded' });
-    const event = await verifier().verify(text);
-    expect(event.paymentStatus).toBe('Refunded');
-  });
+  it.each(['Authorised', 'Refunded', 'Reversed', 'Cancelled'])(
+    'reports %s with success as sent and derives no payment status',
+    async (eventCode) => {
+      for (const success of [true, false]) {
+        const event = await verifier().verify(await signedWebhook({ eventCode, success }));
+        expect([event.eventCode, event.success]).toEqual([eventCode, success]);
+        expect(event).not.toHaveProperty('paymentStatus');
+      }
+    },
+  );
 
   it('normalizes optional fields and maps paymentDetails', async () => {
     const text = await signedWebhook({
@@ -198,6 +196,13 @@ describe('NotifyAck', () => {
     const bodyError = new PrestoPayResponseError('bad body', { operation: 'webhook', source: 'webhook' });
     expect(NotifyAck.forError(sigError)).toBe(NotifyAck.ok);
     expect(NotifyAck.forError(bodyError)).toBe(NotifyAck.ok);
+  });
+
+  it('forError returns resend for a failed query inside the handler', () => {
+    const sigError = new PrestoPaySignatureError('bad sig', { operation: 'query', source: 'response' });
+    const bodyError = new PrestoPayResponseError('bad body', { operation: 'query', source: 'response' });
+    expect(NotifyAck.forError(sigError)).toBe(NotifyAck.resend);
+    expect(NotifyAck.forError(bodyError)).toBe(NotifyAck.resend);
   });
 
   it('forError returns resend for anything else (the merchant\'s own transient failure)', () => {

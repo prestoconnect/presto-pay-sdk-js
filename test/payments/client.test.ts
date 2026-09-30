@@ -437,7 +437,7 @@ describe('client.webhooks', () => {
     const signature = await sign(gatewayKey, canonical);
     const event = await client.webhooks.verify(JSON.stringify({ ...body, signature }));
     expect(event.mid).toBe('TESTMID');
-    expect(event.paymentStatus).toBe('Authorised');
+    expect([event.eventCode, event.success]).toEqual(['Authorised', true]);
   });
 });
 

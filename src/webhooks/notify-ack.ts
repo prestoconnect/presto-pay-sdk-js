@@ -3,7 +3,7 @@
  * or `{"resend":true}` (ask Presto to resend). Presto retries on its own backoff of 1, 2, 5 and 10 minutes, so
  * `forError` matters: answering a permanent failure — bad signature, a foreign `mid`, a stale `ts` — with
  * `resend:true` buys four redeliveries that fail identically. Those map to `ok`; a merchant's own transient
- * failure (the database was down) maps to `resend`.
+ * failure (the database was down, or a `query` inside the handler failed) maps to `resend`.
  */
 import { isPrestoPayError } from '../errors.js';
 
@@ -15,7 +15,13 @@ function jsonResponse(body: string): Response {
 }
 
 function isPermanentFailure(error: unknown): boolean {
-  return isPrestoPayError(error) && (error.name === 'PrestoPaySignatureError' || error.name === 'PrestoPayResponseError');
+  // Only a webhook that failed verification fails the same way on every redelivery. The same error types from an
+  // outbound call inside the handler carry source 'response', and that event must be delivered again.
+  return (
+    isPrestoPayError(error) &&
+    (error.name === 'PrestoPaySignatureError' || error.name === 'PrestoPayResponseError') &&
+    (error as { source?: unknown }).source === 'webhook'
+  );
 }
 
 export const NotifyAck = Object.freeze({
@@ -23,7 +29,7 @@ export const NotifyAck = Object.freeze({
   resend: RESEND_BODY,
   okResponse: (): Response => jsonResponse(OK_BODY),
   resendResponse: (): Response => jsonResponse(RESEND_BODY),
-  /** `ok` for a signature or malformed-body error (permanent — retrying changes nothing); `resend` otherwise. */
+  /** `ok` for a webhook that failed verification (permanent — retrying changes nothing); `resend` otherwise. */
   forError: (error: unknown): string => (isPermanentFailure(error) ? OK_BODY : RESEND_BODY),
   forErrorResponse: (error: unknown): Response => jsonResponse(isPermanentFailure(error) ? OK_BODY : RESEND_BODY),
 });
