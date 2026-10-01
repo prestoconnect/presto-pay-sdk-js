@@ -1,5 +1,5 @@
 import express from 'express';
-import { NotifyAck } from '@prestouniverse/presto-pay-sdk';
+import { isPrestoPayError, NotifyAck } from '@prestouniverse/presto-pay-sdk';
 import { query, verifyWebhook } from '../services/checkout-service.mjs';
 import { appendWebhook } from '../repository/payment-activity-store.mjs';
 
@@ -7,8 +7,20 @@ export const webhookRouter = express.Router();
 const seenWebhookEvents = new Set();
 
 webhookRouter.post('/notify', express.raw({ type: '*/*' }), async (req, res) => {
+  let event;
   try {
-    const event = await verifyWebhook(req.body);
+    event = await verifyWebhook(req.body);
+  } catch (error) {
+    console.error('[webhook] rejected:', error);
+    if (isPrestoPayError(error) && error.name === 'PrestoPaySignatureError') {
+      res.sendStatus(401);
+    } else {
+      res.status(200).type('json').send(NotifyAck.forError(error));
+    }
+    return;
+  }
+
+  try {
     if (seenWebhookEvents.has(event.eventRefNum)) {
       console.log(`[webhook] duplicate delivery of ${event.eventRefNum}, ignoring`);
     } else {

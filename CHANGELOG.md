@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Passing Presto's DER certificate as a Node `Buffer`, for example straight from `readFileSync`, failed with
+  "the certificate could not be imported as an RSA public key". A small `Buffer` is usually a view into Node's
+  shared memory pool, and `Buffer.slice()` returns another view rather than a copy, so Web Crypto was handed the
+  whole pool. The key bytes are now copied out exactly.
+
+### Changed
+
+- The README is now a getting-started guide: creating your key pair and sending Presto the `.der` public key,
+  how a payment flows, a four-step quick start and a payment status table. Reference material moved to
+  `docs/` (payments and errors, webhooks, production), and `docs/production.md` shows how to convert Presto's
+  `.der` certificate to PEM for `PRESTOPAY_PUBLIC_KEY`.
+- The MyStore sample answers HTTP 401 to a webhook that fails with a `PrestoPaySignatureError`, instead of
+  acknowledging it.
+- The private-key error hints no longer assume the key came from an onboarding keystore.
+
 ## 0.2.0 - 2026-10-01
 
 ### Changed
