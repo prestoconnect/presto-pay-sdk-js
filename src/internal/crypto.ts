@@ -82,9 +82,13 @@ export async function verify(
   return subtle().verify(ALGORITHM.name, key, bufferOf(bytes), encoder.encode(canonical));
 }
 
-/** Web Crypto wants an ArrayBuffer; a Uint8Array view may be a window onto a larger one. */
+/**
+ * Web Crypto wants an ArrayBuffer; a Uint8Array view may be a window onto a larger one. The copy uses the
+ * Uint8Array constructor rather than `slice()`, because on a Node Buffer `slice()` returns another view onto the
+ * same (often pooled) memory instead of a copy.
+ */
 function bufferOf(bytes: Uint8Array): ArrayBuffer {
   return bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
     ? (bytes.buffer as ArrayBuffer)
-    : (bytes.slice().buffer as ArrayBuffer);
+    : (new Uint8Array(bytes).buffer as ArrayBuffer);
 }

@@ -30,4 +30,15 @@ describe('sign / verify round trip', () => {
     await expect(verify(publicKey, 'a:b:c', '')).resolves.toBe(false);
   });
 
+  it('imports a DER certificate passed as a Node Buffer that is a view into a larger pool', async () => {
+    const der = Buffer.from(testCertPem.replace(/-----[A-Z ]+-----|\s/g, ''), 'base64');
+    const pooled = Buffer.concat([Buffer.alloc(8), der, Buffer.alloc(8)]).subarray(8, 8 + der.length);
+    expect(pooled.byteOffset).toBeGreaterThan(0);
+
+    const privateKey = await importPrivateKey(testKeyPem, 'privateKey');
+    const publicKey = await importPublicKey(pooled, 'prestoPublicKey');
+    const signature = await sign(privateKey, 'a:b:c');
+    await expect(verify(publicKey, 'a:b:c', signature)).resolves.toBe(true);
+  });
+
 });
