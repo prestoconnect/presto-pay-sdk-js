@@ -19,11 +19,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "declaration": true,
-    "sourceMap": true,
-
-    "paths": {
-      "@spec/*": ["../presto-pay-spec/*"]
-    }
+    "sourceMap": true
   },
   "include": ["src", "test"]
 }
