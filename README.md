@@ -123,7 +123,7 @@ const payment = await presto.payments.init({
   currencyCode: 'MYR',
   notifyUrl: 'https://your-app.example/presto/notify',
   redirectUrl: `https://your-app.example/presto/return/${orderId}`,
-  allowedPaymentMethods: [PaymentMethod.Card], // Skip this unless you build your own payment selection page
+  allowedPaymentMethods: [PaymentMethod.PmPgCard], // Skip this unless you build your own payment selection page
 });
 
 // Save payment.paymentRefNum with the order, then send the shopper to Presto.
