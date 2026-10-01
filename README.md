@@ -1,32 +1,26 @@
-# @prestouniverse/presto-pay-sdk
+# Presto Pay SDK for JavaScript
 
 [![npm](https://img.shields.io/npm/v/@prestouniverse/presto-pay-sdk.svg)](https://www.npmjs.com/package/@prestouniverse/presto-pay-sdk)
 [![CI](https://github.com/prestoconnect/presto-pay-sdk-js/actions/workflows/ci.yml/badge.svg)](https://github.com/prestoconnect/presto-pay-sdk-js/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-Standalone Presto Pay SDK for JavaScript and TypeScript. It signs and verifies gateway requests using Web Crypto,
-handling the parts that are easy to get subtly wrong when integrating a signed payment API by hand.
+Accept payments through the **Presto Connect** payment gateway from JavaScript or TypeScript on the server. The
+SDK signs every request, verifies every response and webhook, and gives you typed requests and results, so you
+don't have to handle the gateway's signature scheme yourself.
 
-- **Node 18.20+** (20, 22, 24, 26), Cloudflare Workers, and Vercel Edge — Bun and Deno may work but are not in
-  the support statement yet
-- **Zero runtime dependencies**
-- **Server-side only, ESM-only** — browsers are refused because the merchant private key must not reach
-  client-side code; CommonJS callers on Node 18.20–22.11 must use dynamic `import()`
-
-`0.2.0` is the current release. See [CHANGELOG.md](CHANGELOG.md) for release notes.
+- **Node 18.20+**, Cloudflare Workers and Vercel Edge
+- **Zero runtime dependencies**; signing uses Web Crypto
+- **Server-side only, ESM-only**: it refuses to load in a browser, because your private key must never reach
+  client-side code. On Node 18.20–22.11, CommonJS code loads it with dynamic `import()`
 
 ## Contents
 
 - [Install](#install)
+- [Before you start](#before-you-start)
+- [How a payment works](#how-a-payment-works)
 - [Quick start](#quick-start)
-- [Merchant identity](#merchant-identity)
-- [Configuration from environment](#configuration-from-environment)
-- [Retries and idempotency](#retries-and-idempotency)
-- [Webhooks](#webhooks)
-- [Errors](#errors)
-- [Samples](#samples)
-- [Checks](#checks)
-- [License](#license)
+- [Payment statuses](#payment-statuses)
+- [Next steps](#next-steps)
 
 ## Install
 
@@ -34,164 +28,202 @@ handling the parts that are easy to get subtly wrong when integrating a signed p
 npm install @prestouniverse/presto-pay-sdk
 ```
 
-> **Production safety:** use `environment: 'staging'` while integrating and validating. Switch to
-> `environment: 'production'` only with production credentials and a production checklist. Never mix staging
-> and production keys, merchant references, or webhook endpoints.
+## Before you start
 
-Credentials — merchant ID (`mid`), Presto merchant reference (`prestoMrn`), an unencrypted PKCS#8 PEM private
-key, and Presto's public certificate (PEM or DER) — come from onboarding; this repository does not contain
-bundled staging credentials.
+### 1. Create your key pair
+
+You sign every request with your own RSA private key, and Presto verifies it with the matching public key.
+Generate the pair yourself with `openssl`; the private key never leaves your systems:
+
+```bash
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out merchant-key.pem
+openssl req -new -x509 -key merchant-key.pem -days 3650 -subj "/CN=Your Company" -outform DER -out merchant.der
+```
+
+`merchant-key.pem` is your private key in the unencrypted PKCS#8 PEM format the SDK reads; keep it secret and
+out of source control. Send `merchant.der` (your public key, in the DER format Presto requires) to Presto.
+
+### 2. Get your details from Presto
+
+| From Presto | What it is | Where it goes |
+|-------------|------------|---------------|
+| Merchant ID (`mid`) | Identifies your merchant account | `createPrestoPay({ merchantId })` |
+| Presto merchant reference (`prestoMrn`) | Identifies the shop or outlet; one `mid` can have several | Every request: `prestoMrn` |
+| Presto certificate (`.der`) | Verifies Presto's responses and webhooks; the SDK reads it as is | `createPrestoPay({ prestoPublicKey })` |
+
+Staging and production are separate: each has its own `mid`, `prestoMrn` and Presto certificate, and you
+register your public key for each. Never mix them.
+
+## How a payment works
+
+```
+ Your server                      Presto                     Shopper's browser
+     |---- 1. init ------------------>|                              |
+     |<--- paymentUrl ----------------|                              |
+     |---- 2. redirect to paymentUrl ------------------------------->|
+     |                                |<---- 3. shopper pays --------|
+     |                                |---- 4a. redirect to your redirectUrl -->|
+     |<--- 4b. webhook to your notifyUrl                             |
+     |---- 5. query ----------------->|                              |
+```
+
+1. Your server calls `init` with your order's reference and amount. Presto returns a `paymentUrl`.
+2. You redirect the shopper to `paymentUrl`.
+3. The shopper chooses a payment method and pays on Presto's page.
+4. Presto sends the shopper's browser back to your `redirectUrl` **and** POSTs a signed webhook to your
+   `notifyUrl`. These happen independently and can arrive in either order.
+5. On both, you call `query` to get the payment's status from Presto, and update the order.
+
+The identifiers you'll see:
+
+| Name | Who creates it | What it's for |
+|------|----------------|---------------|
+| `txnRefNum` | You | Your reference for the payment, such as an order ID. Unique per payment, at most 50 characters |
+| `paymentRefNum` | Presto | Presto's reference for the payment, returned by `init` |
+| `eventRefNum` | Presto | Identifies one webhook event; stays the same when Presto redelivers it |
+| `reversalRefNum`, `refundRefNum` | You | Your reference for a reversal or a refund |
 
 ## Quick start
 
+These examples use Node and Express. Workers, Next.js and other runtimes work the same way; see
+[Webhooks](docs/webhooks.md#reading-the-raw-body) for how to read the raw body in each.
+
+### 1. Create the client
+
+Create it once at startup and reuse it.
+
 ```ts
-import { createPrestoPay, TxnType } from '@prestouniverse/presto-pay-sdk';
+import { readFileSync } from 'node:fs';
+import { createPrestoPay } from '@prestouniverse/presto-pay-sdk';
 
 const presto = createPrestoPay({
-  environment: 'staging', // change only after production validation
-  merchantId: process.env.PRESTOPAY_MID!,
-  privateKey: process.env.PRESTOPAY_PRIVATE_KEY!,
-  prestoPublicKey: process.env.PRESTOPAY_PUBLIC_KEY!,
+  environment: 'staging',
+  merchantId: 'YOUR_MID',
+  privateKey: readFileSync('merchant-key.pem', 'utf8'),
+  prestoPublicKey: readFileSync('presto.der'),
 });
+```
+
+To configure the client from environment variables instead, see
+[Configuration](docs/production.md#configuration-from-environment).
+
+### 2. Start a payment
+
+```ts
+import { PaymentMethod, TxnType } from '@prestouniverse/presto-pay-sdk';
 
 const payment = await presto.payments.init({
-  prestoMrn: process.env.PRESTO_MRN!,
+  prestoMrn: 'YOUR_PRESTO_MRN',
   txnType: TxnType.WebPay,
-  txnRefNum: 'order-123',
-  displayDesc: 'Order 123',
-  amount: 10_000, // minor units; MYR 100.00
+  txnRefNum: orderId,
+  displayDesc: `Order ${orderId}`,
+  amount: 10_000, // minor units: MYR 100.00
   currencyCode: 'MYR',
-  notifyUrl: 'https://merchant.example/presto/notify',
-  redirectUrl: 'https://merchant.example/presto/return/order-123',
+  notifyUrl: 'https://your-app.example/presto/notify',
+  redirectUrl: `https://your-app.example/presto/return/${orderId}`,
+  allowedPaymentMethods: [PaymentMethod.Card], // Skip this unless you build your own payment selection page
 });
 
-// Redirect the shopper to the hosted payment page.
-console.log(payment.paymentUrl);
+// Save payment.paymentRefNum with the order, then send the shopper to Presto.
+if (!payment.paymentUrl) throw new Error(`Presto returned no paymentUrl for ${orderId}`);
+res.redirect(payment.paymentUrl);
 ```
 
-See [payments and errors](docs/payments-and-errors.md) for hosted-flow completion, retries, and reconciliation.
+`notifyUrl` must be reachable from the internet; on your own machine, use a tunnel such as ngrok.
 
-## Merchant identity
+### 3. Show the result on your return page
 
-A client belongs to one merchant: `merchantId` (`mid`) is required in `PrestoPayOptions`, sent on every request,
-and `createWebhookVerifier({ merchantId, ... })` rejects events for any other `mid`. `prestoMrn` is set per
-operation (`InitRequest.prestoMrn`, etc.), so one client can use several `prestoMrn`s under its `mid`.
-
-To serve several merchants, build one `PrestoPayClient` per `mid` (they can share the same keys) and route each
-request and webhook to the matching client, for example with a `Map` keyed by `mid`.
-
-## Configuration from environment
+The redirect only tells you the shopper came back, not whether they paid. Ask Presto:
 
 ```ts
-import { fromEnv, createPrestoPay } from '@prestouniverse/presto-pay-sdk';
+import { PaymentStatus } from '@prestouniverse/presto-pay-sdk';
 
-const presto = createPrestoPay(fromEnv(process.env));
+const result = await presto.payments.query({ prestoMrn: 'YOUR_PRESTO_MRN', txnRefNum: orderId });
+
+if (result.paymentStatus === PaymentStatus.Authorised) {
+  // Paid: show the confirmation.
+} else if (result.paymentStatus === PaymentStatus.PendingAuthorise) {
+  // Not finished yet: show "processing" and check again shortly.
+} else {
+  // Not paid (Failed, Cancelled, Expired, ...): let the shopper try again.
+}
 ```
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `PRESTOPAY_ENV` | One of env or base URL | `staging` or `production` |
-| `PRESTOPAY_BASE_URL` | Alternative to `PRESTOPAY_ENV` | Override gateway base URL |
-| `PRESTOPAY_MID` | Yes | Merchant `mid` for this client |
-| `PRESTOPAY_PRIVATE_KEY` | Yes | Unencrypted PKCS#8 PEM private key |
-| `PRESTOPAY_PUBLIC_KEY` | Yes | Presto public certificate (PEM or DER) |
+### 4. Handle the webhook
 
-`fromEnv` works with `process.env`, a Workers `env` binding, or Vercel's env object — anything shaped like a
-string record. Merge in `fetch`, `now`, `strict`, and the rest programmatically:
-`createPrestoPay({ ...fromEnv(process.env), strict: true })`. For production, prefer loading keys from your
-secret store over raw environment strings when possible.
-
-## Retries and idempotency
-
-`payments.init`, `payments.reverse`, and `payments.refund` are **not** automatically retried after the request may
-have reached Presto. The default retry policy (`retryReads` / `DEFAULT_RETRY_READS`) only covers `payments.query`;
-these three operations are only retried automatically when `PrestoPayTransportError.requestNotSent` is `true`.
-(`init` is idempotent by `txnRefNum` if you do retry it manually — see below — but `reverse` and `refund` have no
-such confirmed idempotency, so avoid resending those blind.)
-
-If `init` times out or fails ambiguously **after** send, `init` is idempotent by `txnRefNum`: calling it again with
-the same `txnRefNum` does not create a second payment record or fail — Presto returns the existing payment's
-current status under the same `paymentRefNum`. That makes a retry safe, but it still means guessing based on a
-client-side timeout; prefer reconciling explicitly with:
+A webhook tells you something happened to a payment (`eventCode`, and `success` for whether it worked), not the
+payment's resulting status, so query for that here too. Verify the **raw** request body, exactly as received.
 
 ```ts
-const status = await presto.payments.query({
-  prestoMrn: process.env.PRESTO_MRN!,
-  txnRefNum: 'order-123',
+import express from 'express';
+import { isPrestoPayError, NotifyAck } from '@prestouniverse/presto-pay-sdk';
+
+app.post('/presto/notify', express.raw({ type: '*/*' }), async (req, res) => {
+  let event;
+  try {
+    event = await presto.webhooks.verify(req.body);
+  } catch (error) {
+    if (isPrestoPayError(error) && error.name === 'PrestoPaySignatureError') {
+      res.sendStatus(401); // forged, for another mid, or too old
+    } else {
+      res.type('json').send(NotifyAck.forError(error)); // malformed body
+    }
+    return;
+  }
+
+  if (!(await orders.isEventHandled(event.eventRefNum))) {
+    try {
+      const payment = await presto.payments.query({
+        prestoMrn: event.prestoMrn,
+        paymentRefNum: event.paymentRefNum,
+      });
+      await orders.updateStatus(event.txnRefNum, payment.paymentStatus, event.eventRefNum);
+    } catch {
+      res.type('json').send(NotifyAck.resend);
+      return;
+    }
+  }
+  res.type('json').send(NotifyAck.ok);
 });
 ```
 
-`payments.query` is read-only and safe to retry on transport errors and 5xx responses.
+`NotifyAck.ok` tells Presto the event is handled. `NotifyAck.resend` asks Presto to deliver it again (after 1,
+2, 5 and 10 minutes), which you want when your own processing failed. Presto redelivers an event with the same
+`eventRefNum`, so record it once handled and skip it on later deliveries. See [Webhooks](docs/webhooks.md) for
+the details.
 
-## Webhooks
+Update the order the same way from your return page and your webhook: whichever arrives first records the
+status, and the other finds it already done.
 
-Presto POSTs JSON to your `notifyUrl` from its infrastructure — the URL must be **publicly reachable** (not
-`localhost` unless you tunnel):
+## Payment statuses
 
-```ts
-import { createWebhookVerifier } from '@prestouniverse/presto-pay-sdk';
+`paymentStatus` is one of these strings; compare it with the `PaymentStatus` constants.
 
-const verifier = createWebhookVerifier({
-  merchantId: process.env.PRESTOPAY_MID!, // required; rejects events signed for other merchants
-  prestoPublicKey: process.env.PRESTOPAY_PUBLIC_KEY!,
-});
+| Status | Meaning | What to do |
+|--------|---------|------------|
+| `PendingAuthorise` | Created; the shopper hasn't finished paying | Wait. It becomes `Expired` if not paid within 15 minutes of `init` |
+| `Authorised` | Paid | Fulfil the order |
+| `Failed` | The payment attempt failed | Don't fulfil; let the shopper try again with a new `txnRefNum` |
+| `Cancelled` | Cancelled before it was paid, for example by `reverse` | Don't fulfil |
+| `Expired` | Not paid within 15 minutes | Don't fulfil; start a new payment if the shopper returns |
+| `PendingReverse` | A reversal is in progress | Query again later |
+| `Reversed` | The payment was reversed | Treat the order as cancelled |
+| `PendingRefund` | A refund is in progress | Query again later |
+| `PartialRefunded` | Part of the amount was refunded | Update the order's refunded amount |
+| `Refunded` | The full amount was refunded | Treat the order as refunded |
 
-const event = await verifier.verify(rawRequestBody); // string, Uint8Array, or unread Request
-const payment = await presto.payments.query({ prestoMrn: event.prestoMrn, paymentRefNum: event.paymentRefNum });
-console.log(event.eventCode, event.success, payment.paymentStatus);
-```
+The gateway can add statuses, so handle an unknown value without failing.
 
-A webhook says what happened (`eventCode`, and `success` for whether it worked), not the payment's resulting
-status — a failed `Refunded`, for example, leaves the payment as it was — so the event carries no status. Query
-the payment for it. If that query fails, `NotifyAck.forError` answers `resend`, so Presto delivers the event again.
+## Next steps
 
-Presto signs webhooks for every partner with the same key, so `merchantId` must be checked — without it, a
-genuine event for another merchant would still verify. Signature is checked before `mid` and freshness, since a
-forged body fails there regardless.
+- [Payments and errors](docs/payments-and-errors.md): look up, reverse and refund payments; handle errors and
+  timeouts safely.
+- [Webhooks](docs/webhooks.md): reading the raw body in each runtime, replies, redelivery and deduplication.
+- [Production](docs/production.md): configuration, keys and secrets, several merchants, the go-live
+  checklist and troubleshooting.
+- [Sample](sample/my-store/README.md): a runnable Express checkout against Presto staging (`npm run demo`).
 
-`verify` also rejects a webhook whose signed `ts` is more than 15 minutes from the local clock by default, so a
-captured webhook cannot be replayed later. Keep the host clock in sync (NTP). Adjust the window with
-`maxTimestampAgeMs`; widening it further means you must deduplicate events yourself (for example by
-`eventRefNum`).
-
-After any webhook, call `payments.query` for authoritative payment status. See
-[webhook handling](docs/webhooks.md) for the full walkthrough, including framework-specific raw-body setup.
-
-## Errors
-
-All SDK errors extend `PrestoPayError`, identified by `isPrestoPayError(error)` rather than `instanceof` (which
-breaks silently across duplicate copies of the package):
-
-| Type | When |
-|------|------|
-| `PrestoPayApiError` | Non-200 status, or a signed body with `success: false` |
-| `PrestoPaySignatureError` | Missing or invalid signature on responses/webhooks; webhook `mid` not allowed or timestamp outside the freshness window |
-| `PrestoPayResponseError` | Malformed body, missing required field, unparseable `ts`, echo mismatch |
-| `PrestoPayTransportError` | Network failure, timeout, abort — check `requestNotSent` |
-| `PrestoPayConfigError` | Invalid options or request input, including strings that cannot survive UTF-8 encoding |
-
-`mayHaveSucceeded(error)` is a guard over `mayHaveTakenEffect`, stamped at the point of throw for `init`,
-`reverse`, and `refund` — a 500 on `init` is indeterminate, a 500 on `query` means nothing happened. See
-[payments and errors](docs/payments-and-errors.md) for reconciliation guidance.
-
-## Samples
-
-[sample/my-store/](sample/my-store/) — a MyStore-branded checkout demo that calls Presto's real staging gateway.
-Credentials are required and must be supplied by you; none are bundled or implied by the repository.
-
-```bash
-npm install
-npm run demo
-```
-
-Configure the required variables in `sample/my-store/.env` first: `PRESTOPAY_MID`, `PRESTO_MRN`,
-`PRESTOPAY_PRIVATE_KEY_FILE`, and `PRESTOPAY_PUBLIC_KEY_FILE`. `PORT` and `PUBLIC_URL` are optional. The demo
-uses localhost for redirects; use a public HTTPS tunnel and set `PUBLIC_URL` to receive webhooks.
-
-See [sample/my-store/README.md](sample/my-store/README.md) for details, and
-[production configuration and staging checklist](docs/production.md) before going live.
-
-## Checks
+## Contributing
 
 ```bash
 npm run typecheck
@@ -199,11 +231,9 @@ npm test
 npm run check:package
 ```
 
-The opt-in live staging test is `npm run test:staging` with externally supplied credentials; it is not part of
-`npm test`.
-
-Reference material: [security policy](SECURITY.md).
+`npm run test:staging` runs an opt-in test against Presto staging with your own credentials. Report security
+issues as described in [SECURITY.md](SECURITY.md), not in a public issue.
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).

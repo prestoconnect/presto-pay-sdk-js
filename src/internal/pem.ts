@@ -16,8 +16,8 @@ export interface PemBlock {
 }
 
 const CONVERT_P12 =
-  'openssl pkcs12 -in partner.p12 -nocerts -nodes -out partner-key.pem ' +
-  '(this exits non-zero on Presto\'s keystore because its certificate bag is RC2-encrypted, ' +
+  'openssl pkcs12 -in merchant.p12 -nocerts -nodes -out merchant-key.pem ' +
+  '(OpenSSL 3 can exit non-zero on a keystore whose certificate bag is RC2-encrypted, ' +
   'while still writing the key correctly)';
 
 export function decodePem(text: string, field: string): PemBlock {
@@ -59,8 +59,8 @@ export function privateKeyDer(text: string, field: string): Uint8Array {
   }
   if (/-----BEGIN CERTIFICATE-----/.test(text)) {
     throw new PrestoPayConfigError(
-      `${field}: this is a certificate, not a private key. The private key comes from the onboarding ` +
-        `keystore: ${CONVERT_P12}`,
+      `${field}: this is a certificate, not a private key. Pass your private key; if it is in a .p12 ` +
+        `keystore, convert it: ${CONVERT_P12}`,
       { operation: 'config', field },
     );
   }

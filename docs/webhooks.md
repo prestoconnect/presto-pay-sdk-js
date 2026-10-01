@@ -1,61 +1,134 @@
 # Webhooks
 
-Webhook signatures cover the exact request body bytes. Verify the raw body before parsing it, and configure the
-merchant ID(s) and Presto public certificate used to sign events.
+Presto POSTs a signed JSON webhook to the `notifyUrl` you pass to `init`, `reverse` or `refund` when something
+happens to that payment. The [quick start](../README.md#4-handle-the-webhook) has a complete Express handler;
+this guide explains each part.
+
+- [What a webhook tells you](#what-a-webhook-tells-you)
+- [Reading the raw body](#reading-the-raw-body)
+- [Verifying it](#verifying-it)
+- [Replying](#replying)
+- [Handling redeliveries](#handling-redeliveries)
+- [The freshness window](#the-freshness-window)
+- [Several merchants, and webhook-only services](#several-merchants-and-webhook-only-services)
+
+## What a webhook tells you
+
+`presto.webhooks.verify(...)` returns a `WebhookEvent`:
+
+| Property | Value |
+|----------|-------|
+| `eventCode` | What happened: `Authorised`, `Cancelled`, `Reversed`, `Refunded` or `Expired` (compare with `EventCode`). Presto may add codes |
+| `success` | Whether it worked. A `Refunded` event with `success` false is a refund that failed |
+| `txnRefNum`, `paymentRefNum`, `prestoMrn`, `mid` | Which payment it's about |
+| `eventRefNum` | Identifies this event; the same on every redelivery |
+| `amount`, `currencyCode`, `paymentDetails` | The payment's amount and how it was paid |
+
+A webhook reports an event, not the payment's resulting status. A failed refund, for example, leaves the
+payment in whatever status it had before, which the event doesn't carry. To act on a webhook, `query` the
+payment and use the status it returns.
+
+## Reading the raw body
+
+The signature covers the body's exact bytes, so verify the body as received. `verify` takes a `string`, a
+`Uint8Array` (including a Node `Buffer`) or an unread `Request`:
+
+- **Express:** mount `express.raw({ type: '*/*' })` on the webhook route and pass `req.body`. Don't let
+  `express.json()` parse it first.
+- **Cloudflare Workers, Next.js route handlers and other Fetch-style handlers:** pass the `Request` itself, or
+  `await request.text()`.
+- **Hono:** pass `c.req.raw`.
+
+Passing `JSON.parse(body)`, JSON you've re-serialized, or a request whose body was already read will fail
+verification.
+
+## Verifying it
+
+`verify` checks that:
+
+- the body is signed by Presto,
+- the required fields are present,
+- the event is for your `mid`, and
+- its timestamp is within 15 minutes of your clock.
+
+The `mid` check matters: Presto signs webhooks for every merchant with the same key, so a genuine webhook for
+someone else's account would otherwise pass.
+
+A failure throws `PrestoPaySignatureError` (bad signature, another merchant's `mid`, or a stale timestamp) or
+`PrestoPayResponseError` (malformed body). Answer a `PrestoPaySignatureError` with HTTP 401. For a malformed
+body, `NotifyAck.forError(error)` gives `{"resend":false}`, since a redelivery would fail the same way.
+
+## Replying
+
+Reply HTTP 200 with a JSON body:
+
+| Body | Meaning | When to send it |
+|------|---------|-----------------|
+| `NotifyAck.ok` (`{"resend":false}`) | Handled; don't send it again | You've recorded the event, or had already recorded it earlier |
+| `NotifyAck.resend` (`{"resend":true}`) | Send it again later | Your own processing failed, for example the `query` or your database |
+
+In a Fetch-style handler, `NotifyAck.okResponse()` and `NotifyAck.resendResponse()` return a ready-made
+`Response`:
 
 ```ts
-import { NotifyAck } from '@prestouniverse/presto-pay-sdk';
-
-async function handleNotify(request: Request) {
+export async function POST(request: Request) {
+  let event;
   try {
-    const event = await presto.webhooks.verify(request);
-    await handleOnce(event.eventRefNum, event);
-    return NotifyAck.okResponse();
+    event = await presto.webhooks.verify(request);
   } catch (error) {
+    if (isPrestoPayError(error) && error.name === 'PrestoPaySignatureError') {
+      return new Response(null, { status: 401 });
+    }
     return NotifyAck.forErrorResponse(error);
   }
+  // ... query and record the event, returning NotifyAck.resendResponse() if that fails
+  return NotifyAck.okResponse();
 }
 ```
 
-`createWebhookVerifier` is available when a service only receives webhooks:
+Presto retries 1, 2, 5 and 10 minutes after the first attempt, so an event is delivered at most five times over
+about 18 minutes. Only ask for a resend when trying again could succeed.
+
+`NotifyAck.forError(error)` picks the reply for an error: `ok` for a webhook that failed verification, and
+`resend` for anything else, including a failed `query` inside your handler.
+
+Reply quickly. Record the event and reply, and do slow work such as emails or fulfilment afterwards.
+
+## Handling redeliveries
+
+The same event can arrive more than once, for example after you ask for a resend. Every delivery of an event
+has the same `eventRefNum`, so:
+
+- record `eventRefNum` once you've handled the event, under a unique constraint in your database;
+- skip events you've already recorded, and still reply `NotifyAck.ok`;
+- record it only after the `query` succeeds, so a failed attempt isn't mistaken for a handled one on
+  redelivery.
+
+Keep recorded `eventRefNum`s for at least as long as the redelivery schedule (about 18 minutes).
+
+## The freshness window
+
+`verify` rejects a webhook whose timestamp is more than 15 minutes from your clock, so a captured webhook can't
+be replayed later. Each redelivery carries a fresh timestamp, so redeliveries pass. Keep your server's clock in
+sync with NTP.
+
+To change the window, pass `webhooks: { maxTimestampAgeMs }` to `createPrestoPay`, or `maxTimestampAgeMs` to
+`createWebhookVerifier`. Widen it only if you deduplicate on `eventRefNum`, since that becomes your protection
+against replays.
+
+## Several merchants, and webhook-only services
+
+`createWebhookVerifier` builds a verifier without a client. It holds no private key, so a service that only
+receives webhooks needs nothing else, and it accepts several merchants on one endpoint:
 
 ```ts
+import { createWebhookVerifier } from '@prestouniverse/presto-pay-sdk';
+
 const verifier = createWebhookVerifier({
   merchantId: ['MID_A', 'MID_B'],
-  prestoPublicKey: prestoCertificate,
+  prestoPublicKey: readFileSync('presto.der'),
 });
+
+const event = await verifier.verify(request);
+// event.mid says which merchant it's for: pick the matching client before you query.
 ```
-
-## Raw-body examples
-
-- Fetch/Workers/Next.js route handlers: pass the `Request` directly, or pass `await request.text()`.
-- Express: mount `express.raw({ type: '*/*' })` on this route and pass the resulting `Buffer`; do not use a body
-  already processed by `express.json()`.
-- Hono: pass `c.req.raw`.
-
-Passing `JSON.parse(body)` or a request whose body was already consumed will fail verification. The verifier checks the
-signature, configured `mid`, and webhook timestamp freshness (15 minutes by default).
-
-## Deduplication and acknowledgements
-
-Presto can redeliver an event. `eventRefNum` is stable across redeliveries, so record it in durable storage with a
-reasonable TTL and make fulfilment idempotent:
-
-```ts
-async function handleOnce(eventRefNum: string, event: WebhookEvent) {
-  if (await seen(eventRefNum)) return;
-  await fulfil(event);
-  await markSeen(eventRefNum);
-}
-```
-
-Return HTTP 200 with `NotifyAck.ok` (or `okResponse()`) after accepting the event. Return `NotifyAck.resend` only for
-your own transient failure, such as an unavailable database. `NotifyAck.forError` maps a webhook that failed
-verification (a signature or malformed-body error whose `source` is `'webhook'`) to `resend: false`; retrying those
-failures cannot repair the request. The same error types from a call inside the handler, such as a failed `query`,
-have `source: 'response'` and map to `resend: true`, so the event is delivered again.
-
-A webhook says what happened (`eventCode`, `success`), not the payment's resulting status, and the event carries no
-status. Call `query` for it, and mark `eventRefNum` as seen only after that succeeds, so a redelivery after a failed
-query is not mistaken for a duplicate. See the [payment reconciliation guide](payments-and-errors.md)
-and the [MyStore webhook route](../sample/my-store/README.md).
