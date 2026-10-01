@@ -13,7 +13,7 @@ handling the parts that are easy to get subtly wrong when integrating a signed p
 - **Server-side only, ESM-only** — browsers are refused because the merchant private key must not reach
   client-side code; CommonJS callers on Node 18.20–22.11 must use dynamic `import()`
 
-`0.1.0` is the first published release. See [CHANGELOG.md](CHANGELOG.md) for release notes.
+`0.2.0` is the current release. See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## Contents
 
