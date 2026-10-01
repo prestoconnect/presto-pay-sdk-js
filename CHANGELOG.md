@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+## 0.2.1 - 2026-10-01
+
 ### Fixed
 
 - Passing Presto's DER certificate as a Node `Buffer`, for example straight from `readFileSync`, failed with
