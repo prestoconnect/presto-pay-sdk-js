@@ -188,8 +188,9 @@ app.post('/presto/notify', express.raw({ type: '*/*' }), async (req, res) => {
 });
 ```
 
-`NotifyAck.ok` tells Presto the event is handled. `NotifyAck.resend` asks Presto to deliver it again (after 1,
-2, 5 and 10 minutes), which you want when your own processing failed.
+`NotifyAck.ok` tells Presto the event is handled. `NotifyAck.resend` asks Presto to deliver it again, which you
+want when your own processing failed. Presto resends with a backoff of 2, 4, 8, 16, 32, 64, 128, 256, 512 and 1024
+minutes between attempts.
 
 The same event can arrive more than once, so `applyStatus` checks the order, not the event: it finalises the
 order only if the order hasn't been finalised yet, and fulfils only on the change into `Authorised`. A
