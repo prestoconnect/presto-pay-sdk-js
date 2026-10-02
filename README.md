@@ -174,26 +174,27 @@ app.post('/presto/notify', express.raw({ type: '*/*' }), async (req, res) => {
     return;
   }
 
-  if (!(await orders.isEventHandled(event.eventRefNum))) {
-    try {
-      const payment = await presto.payments.query({
-        prestoMrn: event.prestoMrn,
-        paymentRefNum: event.paymentRefNum,
-      });
-      await orders.updateStatus(event.txnRefNum, payment.paymentStatus, event.eventRefNum);
-    } catch {
-      res.type('json').send(NotifyAck.resend);
-      return;
-    }
+  try {
+    const payment = await presto.payments.query({
+      prestoMrn: event.prestoMrn,
+      paymentRefNum: event.paymentRefNum,
+    });
+    await orders.applyStatus(event.txnRefNum, payment.paymentStatus);
+  } catch {
+    res.type('json').send(NotifyAck.resend);
+    return;
   }
   res.type('json').send(NotifyAck.ok);
 });
 ```
 
 `NotifyAck.ok` tells Presto the event is handled. `NotifyAck.resend` asks Presto to deliver it again (after 1,
-2, 5 and 10 minutes), which you want when your own processing failed. Presto redelivers an event with the same
-`eventRefNum`, so record it once handled and skip it on later deliveries. See [Webhooks](docs/webhooks.md) for
-the details.
+2, 5 and 10 minutes), which you want when your own processing failed.
+
+The same event can arrive more than once, so `applyStatus` checks the order, not the event: it finalises the
+order only if the order hasn't been finalised yet, and fulfils only on the change into `Authorised`. A
+redelivery then finds the order already in that status and changes nothing. See
+[Webhooks](docs/webhooks.md#handling-redeliveries) for the details.
 
 Update the order the same way from your return page and your webhook: whichever arrives first records the
 status, and the other finds it already done.
@@ -223,7 +224,7 @@ The gateway can add statuses, so handle an unknown value without failing.
   code the SDK doesn't list yet.
 - [Payments and errors](docs/payments-and-errors.md): query, reverse and refund payments; handle errors and
   timeouts safely.
-- [Webhooks](docs/webhooks.md): reading the raw body in each runtime, replies, redelivery and deduplication.
+- [Webhooks](docs/webhooks.md): reading the raw body in each runtime, replies, redelivery and guarding the order update.
 - [Production](docs/production.md): configuration, keys and secrets, several merchants, the go-live
   checklist and troubleshooting.
 - [Sample](sample/my-store/README.md): a runnable Express checkout against Presto staging (`npm run demo`).

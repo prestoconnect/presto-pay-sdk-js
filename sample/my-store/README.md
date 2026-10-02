@@ -36,7 +36,7 @@ localhost. Set `PUBLIC_URL` to a public HTTPS URL when webhook delivery is neede
 | `GET /payments/:paymentRefNum` | `payments.query(...)` by `paymentRefNum`, for `curl` |
 | `POST /payments/:paymentRefNum/reverse` | `payments.reverse(...)` |
 | `POST /payments/:paymentRefNum/refund` | `payments.refund(...)` |
-| `POST /presto/notify` | `webhooks.verify(...)`, `NotifyAck`, and deduping deliveries on `eventRefNum` |
+| `POST /presto/notify` | `webhooks.verify(...)`, `NotifyAck`, `query`, and the same guarded order update as the return page, so a redelivery never fulfils twice |
 
 Selecting a payment method on this site is not a replacement payment processor: it demonstrates the merchant UI
 and SDK request that restricts which method Presto displays. The final authorization still happens on the

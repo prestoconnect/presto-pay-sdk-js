@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createPrestoPay, TxnType } from '@prestouniverse/presto-pay-sdk';
 import { defaultCurrency, notifyUrl, prestoMrn, prestoPayOptions, returnUrlForTransaction } from '../config.mjs';
-import { saveCheckout } from '../repository/payment-activity-store.mjs';
+import { applyPaymentStatus, saveCheckout } from '../repository/payment-activity-store.mjs';
 import { toMinorUnits } from './support/checkout-validation.mjs';
 
 const presto = createPrestoPay(prestoPayOptions);
@@ -86,4 +86,16 @@ export function refundPayment(paymentRefNum) {
 
 export function verifyWebhook(body) {
   return presto.webhooks.verify(body);
+}
+
+export function recordPaymentStatus(txnRefNum, paymentStatus) {
+  if (!paymentStatus) return;
+  const { changed, fulfil } = applyPaymentStatus(txnRefNum, paymentStatus);
+  if (fulfil) {
+    console.log(`[order] ${txnRefNum} paid; fulfilling it`);
+  } else if (changed) {
+    console.log(`[order] ${txnRefNum} is now ${paymentStatus}`);
+  } else {
+    console.log(`[order] ${txnRefNum} already finalised; ${paymentStatus} changes nothing`);
+  }
 }

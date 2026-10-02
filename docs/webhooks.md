@@ -64,7 +64,7 @@ Reply HTTP 200 with a JSON body:
 
 | Body | Meaning | When to send it |
 |------|---------|-----------------|
-| `NotifyAck.ok` (`{"resend":false}`) | Handled; don't send it again | You've recorded the event, or had already recorded it earlier |
+| `NotifyAck.ok` (`{"resend":false}`) | Handled; don't send it again | You've updated the order, or it was already in that status |
 | `NotifyAck.resend` (`{"resend":true}`) | Send it again later | Your own processing failed, for example the `query` or your database |
 
 In a Fetch-style handler, `NotifyAck.okResponse()` and `NotifyAck.resendResponse()` return a ready-made
@@ -96,15 +96,25 @@ Reply quickly. Record the event and reply, and do slow work such as emails or fu
 
 ## Handling redeliveries
 
-The same event can arrive more than once, for example after you ask for a resend. Every delivery of an event
-has the same `eventRefNum`, so:
+The same event can arrive more than once, for example after you ask for a resend, and your return page may
+update the same order first. Guard on the order record rather than on the event:
 
-- record `eventRefNum` once you've handled the event, under a unique constraint in your database;
-- skip events you've already recorded, and still reply `NotifyAck.ok`;
-- record it only after the `query` succeeds, so a failed attempt isn't mistaken for a handled one on
-  redelivery.
+- `query` the payment on every delivery, then apply its status to the order in one conditional update, so
+  that only one caller can finalise it:
 
-Keep recorded `eventRefNum`s for at least as long as the redelivery schedule (about 18 minutes).
+  ```sql
+  UPDATE orders SET status = $1 WHERE txn_ref_num = $2 AND status = 'PendingAuthorise'
+  ```
+
+- fulfil only when that update changed a row and the new status is `Authorised`, and create the fulfilment
+  job in the same transaction;
+- once an order is finalised, apply only the statuses that can follow it (`PendingRefund`, `PartialRefunded`,
+  `Refunded`, `PendingReverse`, `Reversed`), never fulfil again, and never let an older status overwrite a
+  newer one;
+- reply `NotifyAck.ok` whether or not anything changed.
+
+A redelivery, a replay, or a webhook that arrives after the return page then finds the order already in that
+status and does nothing.
 
 ## The freshness window
 
@@ -113,8 +123,8 @@ be replayed later. Each redelivery carries a fresh timestamp, so redeliveries pa
 sync with NTP.
 
 To change the window, pass `webhooks: { maxTimestampAgeMs }` to `createPrestoPay`, or `maxTimestampAgeMs` to
-`createWebhookVerifier`. Widen it only if you deduplicate on `eventRefNum`, since that becomes your protection
-against replays.
+`createWebhookVerifier`. Widen it only if your order update is guarded as described in
+[Handling redeliveries](#handling-redeliveries), since that becomes your protection against replays.
 
 ## Several merchants, and webhook-only services
 

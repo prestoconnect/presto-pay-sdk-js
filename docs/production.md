@@ -83,8 +83,8 @@ safe, and a resent `init`, `reverse` or `refund` could take effect twice.
 - [ ] Load the private key from a secret store, not from source control or the image.
 - [ ] Make `notifyUrl` a public HTTPS URL that Presto can reach.
 - [ ] Have your return page `query` the payment instead of trusting the redirect.
-- [ ] Have your webhook handler verify the raw body, `query` the payment, deduplicate on `eventRefNum` under a
-      unique constraint, return 401 for a `PrestoPaySignatureError`, and reply `NotifyAck.resend` when your own
+- [ ] Have your webhook handler verify the raw body, `query` the payment, apply its status with a guarded update that
+      finalises an order only once and fulfils only on the change into `Authorised`, return 401 for a `PrestoPaySignatureError`, and reply `NotifyAck.resend` when your own
       processing fails.
 - [ ] After a timeout or server error, call `init` again with the same `txnRefNum`, and query before retrying
       `reverse` or `refund`, as in

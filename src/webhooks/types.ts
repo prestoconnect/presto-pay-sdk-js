@@ -9,7 +9,7 @@ export interface WebhookEvent {
   readonly prestoMrn: string;
   readonly paymentRefNum: string;
   readonly txnRefNum: string;
-  /** Stable across redeliveries of the same event (§3.7) — the key to deduplicate on. */
+  /** Stable across redeliveries of the same event (§3.7). */
   readonly eventRefNum: string;
   readonly eventTs: string;
   readonly amount: number;
