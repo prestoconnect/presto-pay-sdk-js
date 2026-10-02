@@ -131,7 +131,8 @@ if (!payment.paymentUrl) throw new Error(`Presto returned no paymentUrl for ${or
 res.redirect(payment.paymentUrl);
 ```
 
-`notifyUrl` must be reachable from the internet; on your own machine, use a tunnel such as ngrok.
+`notifyUrl` must be reachable from the internet; on your own machine, use a tunnel such as ngrok. For the codes
+you can pass to `allowedPaymentMethods`, see [Payment methods](docs/payment-methods.md).
 
 ### 3. Show the result on your return page
 
@@ -218,6 +219,8 @@ The gateway can add statuses, so handle an unknown value without failing.
 
 ## Next steps
 
+- [Payment methods](docs/payment-methods.md): every payment method code, which ones you can use, and passing a
+  code the SDK doesn't list yet.
 - [Payments and errors](docs/payments-and-errors.md): query, reverse and refund payments; handle errors and
   timeouts safely.
 - [Webhooks](docs/webhooks.md): reading the raw body in each runtime, replies, redelivery and deduplication.
