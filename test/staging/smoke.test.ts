@@ -106,6 +106,6 @@ describe.skipIf(!enabled)('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
 
 if (!enabled) {
   describe('staging smoke', () => {
-    it.skip('set PRESTOPAY_STAGING_SMOKE=1 to run this suite against real staging', () => {});
+    it.todo('set PRESTOPAY_STAGING_SMOKE=1 to run this suite against real staging');
   });
 }

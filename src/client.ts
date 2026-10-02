@@ -82,6 +82,12 @@ export interface PrestoPayClient {
   readonly webhooks: WebhookVerifier;
 }
 
+function withoutTrailingSlashes(url: string): string {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') end -= 1;
+  return url.slice(0, end);
+}
+
 function resolveBaseUrl(environment: Environment): string {
   if (typeof environment === 'string') {
     const url = BASE_URLS[environment];
@@ -94,7 +100,7 @@ function resolveBaseUrl(environment: Environment): string {
     return url;
   }
   if (typeof environment === 'object' && environment !== null && typeof environment.baseUrl === 'string') {
-    return environment.baseUrl.replace(/\/+$/, '');
+    return withoutTrailingSlashes(environment.baseUrl);
   }
   throw new PrestoPayConfigError('environment: expected "staging", "production", or { baseUrl }', {
     operation: 'config',

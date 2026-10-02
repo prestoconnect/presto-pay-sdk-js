@@ -390,6 +390,26 @@ describe('raw escape hatch', () => {
     expect(result.echoed).toBe('bar');
   });
 
+  it('drops trailing slashes from a custom baseUrl', async () => {
+    const requestedPaths: string[] = [];
+    const client = createPrestoPay({
+      environment: { baseUrl: 'https://fake.presto.invalid///' },
+      merchantId: 'TESTMID',
+      privateKey: merchantPrivateKeyPem,
+      prestoPublicKey: gatewayCertPem,
+      fetch: createFakeGateway({
+        merchantPublicKeyPem,
+        gatewayPrivateKeyPem,
+        handle: (requestPath, body) => {
+          requestedPaths.push(requestPath);
+          return { body: { success: true, ts: body.ts as string, errorCode: '', errorMessage: '' } as never };
+        },
+      }),
+    });
+    await client.raw.post('/v1/ext/some/new-endpoint', { prestoMrn: 'PM1' });
+    expect(requestedPaths).toEqual(['/v1/ext/some/new-endpoint']);
+  });
+
   it('sign() and verifyBody() round-trip', async () => {
     // sign() uses the client's own private key; verifyBody() checks against its configured prestoPublicKey.
     // To test the round trip in one client, configure both to the same throwaway keypair.

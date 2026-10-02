@@ -34,14 +34,16 @@ function render(value: JsonValue, key: string): string {
   throw new RangeError(`${key}: ${describe(value)}`);
 }
 
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : 1);
+
 /**
- * Sorting is `Array.prototype.sort`, which compares UTF-16 code units. Every known key is ASCII, where that is
- * the same order as code points and as UTF-8 bytes, so the four SDKs agree. `localeCompare` would not.
+ * Sorting compares UTF-16 code units. Every known key is ASCII, where that is the same order as code points and
+ * as UTF-8 bytes, so the four SDKs agree. `localeCompare` would not.
  */
 export function canonicalize(body: Readonly<JsonObject>): string {
   return Object.keys(body)
     .filter((key) => key !== 'signature')
-    .sort()
+    .sort(byCodeUnit)
     .map((key) => render(body[key] as JsonValue, key))
     .join(':');
 }
