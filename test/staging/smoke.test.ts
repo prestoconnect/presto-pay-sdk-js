@@ -38,73 +38,73 @@ function saveCandidate(name: string, data: unknown): void {
   writeFileSync(path.join(candidatesDir, `${name}.json`), JSON.stringify(data, null, 2));
 }
 
-describe.skipIf(!enabled)('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
-  const merchantId = required('PRESTOPAY_MID');
-  const prestoMrn = required('PRESTO_MRN');
-  const privateKey = process.env.PRESTOPAY_PRIVATE_KEY ?? readRequiredTextFile('PRESTOPAY_PRIVATE_KEY_FILE');
-  const prestoPublicKey = process.env.PRESTOPAY_PUBLIC_KEY ?? readRequiredBinaryFile('PRESTOPAY_PUBLIC_KEY_FILE');
+if (enabled) {
+  describe('staging smoke (PRESTOPAY_STAGING_SMOKE=1)', () => {
+    const merchantId = required('PRESTOPAY_MID');
+    const prestoMrn = required('PRESTO_MRN');
+    const privateKey = process.env.PRESTOPAY_PRIVATE_KEY ?? readRequiredTextFile('PRESTOPAY_PRIVATE_KEY_FILE');
+    const prestoPublicKey = process.env.PRESTOPAY_PUBLIC_KEY ?? readRequiredBinaryFile('PRESTOPAY_PUBLIC_KEY_FILE');
 
-  const client = createPrestoPay({
-    environment: 'staging',
-    merchantId,
-    privateKey,
-    prestoPublicKey,
-    strict: true, // reports [U]-rule drift as a failure instead of silently coercing it (§4, §11)
-  });
-
-  it('init a QrPay payment and query it back', async () => {
-    const txnRefNum = `smoke-${Date.now()}`;
-    let initResult;
-    try {
-      initResult = await client.payments.init({
-        prestoMrn,
-        txnType: TxnType.QrPay,
-        txnRefNum,
-        displayDesc: 'presto-pay-sdk-js staging smoke test',
-        amount: 100,
-        currencyCode: 'MYR',
-      });
-    } catch (err) {
-      saveCandidate('init-error', {
-        isPrestoPayError: isPrestoPayError(err),
-        error: err instanceof Error ? { name: err.name, message: err.message } : err,
-      });
-      throw err;
-    }
-    saveCandidate('init-success', initResult);
-    expect(initResult.paymentRefNum).toBeTruthy();
-    expect(initResult.paymentStatus).toBeTruthy();
-
-    const queryResult = await client.payments.query({
-      prestoMrn,
-      paymentRefNum: initResult.paymentRefNum,
-    });
-    saveCandidate('query-success', queryResult);
-    expect(queryResult.paymentRefNum).toBe(initResult.paymentRefNum);
-  }, 30_000);
-
-  it('reports a clear clock-skew message on a deliberately stale request', async () => {
-    const staleClient = createPrestoPay({
+    const client = createPrestoPay({
       environment: 'staging',
       merchantId,
       privateKey,
       prestoPublicKey,
-      now: () => Date.now() - 20 * 60_000, // outside the 15-minute validity window (§3.3)
+      strict: true, // reports [U]-rule drift as a failure instead of silently coercing it (§4, §11)
     });
-    const promise = staleClient.payments.query({
-      prestoMrn,
-      txnRefNum: 'does-not-matter',
-    });
-    await promise.catch((err) => {
-      saveCandidate('stale-ts-error', {
-        message: err instanceof Error ? err.message : String(err),
-      });
-    });
-    await expect(promise).rejects.toThrow(/1005|clock|skew|validity/i);
-  }, 30_000);
-});
 
-if (!enabled) {
+    it('init a QrPay payment and query it back', async () => {
+      const txnRefNum = `smoke-${Date.now()}`;
+      let initResult;
+      try {
+        initResult = await client.payments.init({
+          prestoMrn,
+          txnType: TxnType.QrPay,
+          txnRefNum,
+          displayDesc: 'presto-pay-sdk-js staging smoke test',
+          amount: 100,
+          currencyCode: 'MYR',
+        });
+      } catch (err) {
+        saveCandidate('init-error', {
+          isPrestoPayError: isPrestoPayError(err),
+          error: err instanceof Error ? { name: err.name, message: err.message } : err,
+        });
+        throw err;
+      }
+      saveCandidate('init-success', initResult);
+      expect(initResult.paymentRefNum).toBeTruthy();
+      expect(initResult.paymentStatus).toBeTruthy();
+
+      const queryResult = await client.payments.query({
+        prestoMrn,
+        paymentRefNum: initResult.paymentRefNum,
+      });
+      saveCandidate('query-success', queryResult);
+      expect(queryResult.paymentRefNum).toBe(initResult.paymentRefNum);
+    }, 30_000);
+
+    it('reports a clear clock-skew message on a deliberately stale request', async () => {
+      const staleClient = createPrestoPay({
+        environment: 'staging',
+        merchantId,
+        privateKey,
+        prestoPublicKey,
+        now: () => Date.now() - 20 * 60_000, // outside the 15-minute validity window (§3.3)
+      });
+      const promise = staleClient.payments.query({
+        prestoMrn,
+        txnRefNum: 'does-not-matter',
+      });
+      await promise.catch((err) => {
+        saveCandidate('stale-ts-error', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      });
+      await expect(promise).rejects.toThrow(/1005|clock|skew|validity/i);
+    }, 30_000);
+  });
+} else {
   describe('staging smoke', () => {
     it.todo('set PRESTOPAY_STAGING_SMOKE=1 to run this suite against real staging');
   });
