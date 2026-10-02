@@ -28,10 +28,12 @@ function render(value) {
   throw new RangeError('unrenderable value');
 }
 
+const byCodeUnit = (a, b) => (a < b ? -1 : 1);
+
 function canonicalize(body) {
   return Object.keys(body)
     .filter((k) => k !== 'signature')
-    .sort()
+    .sort(byCodeUnit)
     .map((k) => render(body[k]))
     .join(':');
 }
